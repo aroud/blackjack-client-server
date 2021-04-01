@@ -31,8 +31,11 @@ namespace blackjack {
 	{
 	public:
 		Card(Suite s, Rank r);
+
 		bool IsAce() const;
+
 		Suite GetSuite() const;
+
 		Rank GetRank() const;
 	private:
 		Suite suite_;

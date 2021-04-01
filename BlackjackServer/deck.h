@@ -18,9 +18,9 @@ namespace blackjack {
 		const size_t kDeckUnitsNumber;
 
 		friend std::ostream& operator<< (std::ostream& os, const Deck& deck);
-
 	private:
 		void InitCards();
+
 		void Shuffle();
 
 		std::vector<Card> cards_;

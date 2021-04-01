@@ -2,6 +2,8 @@
 
 namespace blackjack {
 
+	const size_t kRankSize = 13;
+
 	enum class Rank {
 		ace = 1,
 		two,
@@ -29,8 +31,9 @@ namespace blackjack {
 	{
 	public:
 		Card(Suite s, Rank r);
-		bool IsAce();
-		Rank GetRank();
+		bool IsAce() const;
+		Suite GetSuite() const;
+		Rank GetRank() const;
 	private:
 		Suite suite_;
 		Rank rank_;

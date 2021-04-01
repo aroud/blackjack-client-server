@@ -1,6 +1,7 @@
-#include <iostream>
+#include "deck.h"
 
 int main() {
-	std::cout << "Server!";
+	blackjack::Deck deck(2);
+	std::cout << deck << std::endl;
 	return 0;
 }

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <vector>
+#include <iostream>
+#include <algorithm>
 
 #include "card.h"
 
@@ -9,9 +11,14 @@ namespace blackjack {
 	{
 	public:
 		//Init deck and shuffle it
-		Deck();
+		Deck(size_t deck_units_number);
 
-		const size_t kDeckSize = 52;
+		//Blackjack deck consists of 2-6 standard decks
+		const size_t kDeckUnitSize = 52;
+		const size_t kDeckUnitsNumber;
+
+		friend std::ostream& operator<< (std::ostream& os, const Deck& deck);
+
 	private:
 		void InitCards();
 		void Shuffle();

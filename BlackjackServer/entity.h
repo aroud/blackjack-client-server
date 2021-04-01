@@ -1,5 +1,25 @@
 #pragma once
-class Entity
-{
-};
 
+#include <iostream>
+
+#include "hand.h"
+
+namespace blackjack {
+	enum class Turn {
+		stand,
+		hit,
+		doubleDown,
+		surrender
+	};
+
+	class Entity
+	{
+	public:
+		friend std::ostream& operator<<(std::ostream& os, const Entity& entity);
+		virtual Turn MakeTurn() = 0;
+	protected:
+		virtual void PrintHand(std::ostream& os) const = 0;
+	private:
+		Hand hand_;
+	};
+}

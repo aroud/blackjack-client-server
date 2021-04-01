@@ -1,7 +1,11 @@
 #pragma once
-#include "entity.h"
-class Player :
-    public Entity
-{
-};
 
+#include "entity.h"
+
+namespace blackjack {
+
+    class Player :
+        public Entity
+    {
+    };
+}

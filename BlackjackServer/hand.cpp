@@ -46,7 +46,17 @@ namespace blackjack {
 		return (cards_at_hand_.size() == 2 && GetSumValues() == 21);
 	}
 
+	bool Hand::IsBusted() const
+	{
+		return GetSumValues() >= kBustSum;
+	}
+
 	void Hand::ClearHand() {
 		cards_at_hand_.clear();
+	}
+
+	Card Hand::operator[](size_t index) const
+	{
+		return cards_at_hand_[index];
 	}
 }

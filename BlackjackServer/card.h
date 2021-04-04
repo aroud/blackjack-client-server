@@ -1,8 +1,10 @@
 #pragma once
 
+#include <iostream>
+
 namespace blackjack {
 
-	const size_t kRankSize = 13;
+	const size_t kRankSize = 13u;
 
 	enum class Rank {
 		ace = 1,
@@ -37,6 +39,8 @@ namespace blackjack {
 		Suite GetSuite() const;
 
 		Rank GetRank() const;
+
+		friend std::ostream& operator<< (std::ostream& os, const Card& card);
 	private:
 		Suite suite_;
 		Rank rank_;

@@ -26,10 +26,17 @@ namespace blackjack {
 		std::random_shuffle(begin(cards_), end(cards_));
 	}
 
+	Card Deck::getCard()
+	{
+		Card card = cards_.back();
+		cards_.pop_back();
+		return card;
+	}
+
 	std::ostream& operator<< (std::ostream& os, const Deck& deck) {
 		for (const auto& card : deck.cards_) {
 			
-			std::cout << static_cast<int>(card.GetRank()) << " " << static_cast<int>(card.GetSuite()) << "\n";
+			std::cout << card;
 		}
 		return os;
 	}

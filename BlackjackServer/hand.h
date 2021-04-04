@@ -19,9 +19,13 @@ namespace blackjack {
 
 		bool IsBlackjack() const;
 
+		bool IsBusted() const;
+
 		void ClearHand();
 
 		const int kBustSum = 22;
+
+		Card operator[] (size_t index) const;
 	private:
 		std::vector<Card> cards_at_hand_;
 	};

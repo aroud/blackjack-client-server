@@ -5,4 +5,6 @@ namespace blackjack {
 		entity.PrintHand(os);
 		return os;
 	}
+
+	Entity::Entity() {}
 }

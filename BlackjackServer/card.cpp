@@ -17,7 +17,7 @@ namespace blackjack {
 	}
 	std::ostream& operator<<(std::ostream& os, const Card& card)
 	{
-		std::cout << static_cast<int>(card.GetRank()) << " " << static_cast<int>(card.GetSuite()) << "\n";
+		os << static_cast<int>(card.GetRank()) << " " << static_cast<int>(card.GetSuite()) << "\n";
 		return os;
 	}
 }

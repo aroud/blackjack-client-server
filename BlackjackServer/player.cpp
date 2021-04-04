@@ -1,7 +1,7 @@
 #include "player.h"
 
 namespace blackjack {
-	Player::Player(const ControlSystem& cs, size_t player_id) : control_system_(cs), player_id(player_id) {}
+	Player::Player(const ControlSystem& cs, size_t player_id) : control_system_(cs), player_id_(player_id) {}
 	
 	Turn Player::MakeTurn()
 	{
@@ -16,6 +16,6 @@ namespace blackjack {
 	}
 	size_t Player::GetID() const
 	{
-		return player_id;
+		return player_id_;
 	}
 }

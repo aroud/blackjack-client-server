@@ -36,7 +36,7 @@ namespace blackjack {
 	std::ostream& operator<< (std::ostream& os, const Deck& deck) {
 		for (const auto& card : deck.cards_) {
 			
-			std::cout << card;
+			os << card;
 		}
 		return os;
 	}

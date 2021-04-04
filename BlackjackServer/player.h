@@ -15,6 +15,6 @@ namespace blackjack {
     private:
         const ControlSystem& control_system_;
 
-        size_t player_id;
+        size_t player_id_;
     };
 }

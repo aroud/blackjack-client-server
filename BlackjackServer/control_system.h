@@ -3,8 +3,8 @@
 #include "entity.h"
 
 namespace blackjack {
-	class ControlSystem
-	{
+
+	class ControlSystem {
 	public:
 		virtual Turn GetTurn() = 0;
 	};

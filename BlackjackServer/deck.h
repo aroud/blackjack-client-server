@@ -7,8 +7,8 @@
 #include "card.h"
 
 namespace blackjack {
-	class Deck
-	{
+
+	class Deck {
 	public:
 		//Init deck and shuffle it
 		Deck(size_t deck_units_number);

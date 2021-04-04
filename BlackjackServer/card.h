@@ -29,8 +29,7 @@ namespace blackjack {
 		spades
 	};
 
-	class Card
-	{
+	class Card {
 	public:
 		Card(Suite s, Rank r);
 

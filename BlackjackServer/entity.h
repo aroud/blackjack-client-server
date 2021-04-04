@@ -6,6 +6,7 @@
 #include "deck.h"
 
 namespace blackjack {
+
 	enum class Turn {
 		stand,
 		hit,
@@ -20,8 +21,7 @@ namespace blackjack {
 		const size_t kMaxBet = 15;
 	}
 
-	class Entity
-	{
+	class Entity {
 	public:
 		Entity();
 

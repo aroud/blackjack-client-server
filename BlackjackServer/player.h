@@ -3,8 +3,8 @@
 #include "control_system.h"
 
 namespace blackjack {
-    class Player : public Entity
-    {
+
+    class Player : public Entity {
         Player(const ControlSystem& cs, size_t player_id);
   
         virtual Turn MakeTurn() override;

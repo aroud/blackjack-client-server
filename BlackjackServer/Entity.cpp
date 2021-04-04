@@ -1,6 +1,7 @@
 #include "entity.h"
 
 namespace blackjack {
+
 	std::ostream& operator<<(std::ostream& os, const Entity& entity) {
 		entity.PrintHand(os);
 		return os;
@@ -27,10 +28,12 @@ namespace blackjack {
 			break;
 		}
 	}
+
 	size_t Entity::GetChips()
 	{
 		return chips_;
 	}
+
 	void Entity::SetChips(size_t chips)
 	{
 		chips_ = chips;

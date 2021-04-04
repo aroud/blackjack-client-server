@@ -15,6 +15,7 @@ namespace blackjack {
 	Suite Card::GetSuite() const {
 		return suite_;
 	}
+
 	std::ostream& operator<<(std::ostream& os, const Card& card)
 	{
 		os << static_cast<int>(card.GetRank()) << " " << static_cast<int>(card.GetSuite()) << "\n";

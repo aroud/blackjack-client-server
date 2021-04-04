@@ -6,8 +6,7 @@
 
 namespace blackjack {
 
-	class Hand
-	{
+	class Hand {
 	public:
 		Hand();
 

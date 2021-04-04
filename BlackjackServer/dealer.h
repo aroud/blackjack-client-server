@@ -4,8 +4,7 @@
 
 namespace blackjack {
 
-    class Dealer : public Entity
-    {
+    class Dealer : public Entity {
     public:
         Dealer();
 

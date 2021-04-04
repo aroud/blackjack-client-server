@@ -1,5 +1,9 @@
 #pragma once
-class Game
-{
-};
+
+namespace blackjack {
+
+	class Game {
+
+	};
+}
 

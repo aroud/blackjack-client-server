@@ -1,6 +1,7 @@
 #include "dealer.h"
 
 namespace blackjack{
+
 	Dealer::Dealer() : Entity() {}
 
 	void Dealer::PrintHand(std::ostream& os) const

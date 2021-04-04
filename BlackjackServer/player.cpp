@@ -1,7 +1,7 @@
 #include "player.h"
 
 namespace blackjack {
-	Player::Player(ControlSystem cs) : control_system_(cs) {}
+	Player::Player(const ControlSystem& cs) : control_system_(cs) {}
 	
 	Turn Player::MakeTurn()
 	{

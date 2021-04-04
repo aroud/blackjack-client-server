@@ -18,13 +18,15 @@ namespace blackjack {
 		const size_t kDeckUnitsNumber;
 
 		friend std::ostream& operator<< (std::ostream& os, const Deck& deck);
+
+		void Reset();
+
+		Card getCard();
 	private:
 		void InitCards();
 
 		void Shuffle();
 
 		std::vector<Card> cards_;
-
-		Card getCard();
 	};
 }

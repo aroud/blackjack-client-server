@@ -43,6 +43,7 @@ namespace blackjack {
 		friend std::ostream& operator<< (std::ostream& os, const Card& card);
 	private:
 		Suite suite_;
+
 		Rank rank_;
 	};
 }

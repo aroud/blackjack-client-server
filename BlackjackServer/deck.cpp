@@ -26,6 +26,13 @@ namespace blackjack {
 		std::random_shuffle(begin(cards_), end(cards_));
 	}
 
+	void Deck::Reset()
+	{
+		cards_.clear();
+		InitCards();
+		Shuffle();
+	}
+
 	Card Deck::getCard()
 	{
 		Card card = cards_.back();
@@ -35,7 +42,6 @@ namespace blackjack {
 
 	std::ostream& operator<< (std::ostream& os, const Deck& deck) {
 		for (const auto& card : deck.cards_) {
-			
 			os << card;
 		}
 		return os;

@@ -17,6 +17,7 @@ namespace blackjack{
 
 	Turn Dealer::MakeTurn()
 	{
+		is_turn_ = true;
 		Turn turn = Turn::stand;
 		if(hand_.GetSumValues() < 17) {
 			turn = Turn::hit;

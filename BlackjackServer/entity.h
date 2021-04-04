@@ -23,7 +23,7 @@ namespace blackjack {
 
 	class Entity {
 	public:
-		Entity();
+		Entity(size_t initial_chips);
 
 		friend std::ostream& operator<<(std::ostream& os, const Entity& entity);
 

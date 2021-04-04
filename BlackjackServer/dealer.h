@@ -6,7 +6,7 @@ namespace blackjack {
 
     class Dealer : public Entity {
     public:
-        Dealer();
+        Dealer(size_t initial_chips);
 
         const size_t kDealerStop = 17u;
 

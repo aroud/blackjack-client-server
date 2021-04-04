@@ -2,7 +2,7 @@
 
 namespace blackjack{
 
-	Dealer::Dealer() : Entity() {}
+	Dealer::Dealer(size_t initial_chips) : Entity(initial_chips) {}
 
 	void Dealer::PrintHand(std::ostream& os) const
 	{

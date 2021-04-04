@@ -2,11 +2,11 @@
 
 namespace blackjack {
 
-	Player::Player(const ControlSystem& cs, size_t player_id) : control_system_(cs), player_id_(player_id) {}
+	Player::Player(const ControlSystem& cs, size_t player_id, size_t initial_chips) : Entity(initial_chips), control_system_(cs), player_id_(player_id) {}
 	
 	Turn Player::MakeTurn()
 	{
-		return Turn();
+		return control_system_.
 	}
 
 	void Player::PrintHand(std::ostream& os) const

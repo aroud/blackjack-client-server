@@ -16,6 +16,8 @@ namespace blackjack {
         size_t GetID() const;
 
         const ControlSystem& control_system_;
+
+        friend std::ostream& operator<<(std::ostream& os, const Player& p);
     private:
         size_t player_id_;
     };

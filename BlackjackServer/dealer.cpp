@@ -7,7 +7,7 @@ namespace blackjack{
 	void Dealer::PrintHand(std::ostream& os) const
 	{
 		if (!is_turn_) {
-			os << hand_[0];
+			os << hand_[0] << "(?)\n";
 		}
 		else {
 			for (size_t i = 0; i < hand_.GetSize(); ++i) {
@@ -24,5 +24,13 @@ namespace blackjack{
 			turn = Turn::hit;
 		}
 		return turn;
+	}
+
+	std::ostream& operator<<(std::ostream& os, const Dealer& dealer)
+	{
+		os << "Dealer, chips count: " << dealer.chips_ << "\nHand: ";
+		dealer.PrintHand(os);
+
+		return os;
 	}
 }

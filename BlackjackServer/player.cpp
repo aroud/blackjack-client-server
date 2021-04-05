@@ -20,4 +20,12 @@ namespace blackjack {
 	{
 		return player_id_;
 	}
+
+	std::ostream& operator<<(std::ostream& os, const Player& p)
+	{
+		os << "ID: " << p.player_id_ << ",chips count: " << p.chips_ << "\nHand: ";
+		p.PrintHand(os);
+		
+		return os;
+	}
 }

@@ -6,6 +6,7 @@
 namespace blackjack {
 
     class Player : public Entity {
+    public:
         Player(const ControlSystem& cs, size_t player_id, size_t initial_chips);
   
         virtual Turn MakeTurn() override;
@@ -13,9 +14,9 @@ namespace blackjack {
         virtual void PrintHand(std::ostream& os) const override;
 
         size_t GetID() const;
-    private:
-        const ControlSystem& control_system_;
 
+        const ControlSystem& control_system_;
+    private:
         size_t player_id_;
     };
 }

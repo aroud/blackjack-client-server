@@ -24,6 +24,7 @@ namespace blackjack {
 			break;
 		case blackjack::Turn::surrender:
 			bet /= 2;
+			has_surrended = true;
 			break;
 		default:
 			break;
@@ -38,5 +39,10 @@ namespace blackjack {
 	void Entity::SetChips(size_t chips)
 	{
 		chips_ = chips;
+	}
+
+	Hand& Entity::GetHand()
+	{
+		return hand_;
 	}
 }

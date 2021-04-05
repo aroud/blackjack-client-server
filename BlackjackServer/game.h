@@ -3,6 +3,8 @@
 #include <vector>
 #include <memory>
 #include <utility>
+#include <iostream>
+#include <functional>
 
 #include "player.h"
 #include "dealer.h"
@@ -17,6 +19,13 @@ namespace blackjack {
 		ended
 	};
 
+	enum class RoundResults {
+		playerWin32,
+		playerWin11,
+		draw,
+		playerLose
+	};
+
 	class Game {
 	public:
 		Game(size_t deck_units_number);
@@ -29,6 +38,8 @@ namespace blackjack {
 
 		void EndRound();
 	private:
+		RoundResults CheckWin(std::shared_ptr<Player> player_ptr, Dealer& dealer);
+		
 		GameStatus game_status_;
 
 		Deck deck_;

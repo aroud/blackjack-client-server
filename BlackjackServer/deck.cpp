@@ -35,6 +35,9 @@ namespace blackjack {
 
 	Card Deck::getCard()
 	{
+		if (cards_.empty()) {
+			Reset();
+		}
 		Card card = cards_.back();
 		cards_.pop_back();
 		return card;

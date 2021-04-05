@@ -34,6 +34,10 @@ namespace blackjack {
 		size_t GetChips();
 
 		void SetChips(size_t chips);
+
+		Hand& GetHand();
+
+		bool has_surrended = false;
 	protected:
 		virtual void PrintHand(std::ostream& os) const = 0;
 

@@ -12,6 +12,7 @@ namespace blackjack {
 
         Turn turn = Turn::stand;
 
+        std::cout << "Input turn {stand, hit, doubleDown, surrender}:\n";
         do {
             std::cin >> input;
             if (input == "stand") {
@@ -43,6 +44,7 @@ namespace blackjack {
     size_t blackjack::ConsoleInputSystem::StartRound(size_t min_bet, size_t max_bet) const
     {
         size_t result = 0;
+        std::cout << "Input your bet (between " << min_bet << " and " << max_bet << ") or 0 to exit game:\n";
         do {
             std::cin >> result;
         } while (!((result == 0) || (result >= min_bet && result <= max_bet)));

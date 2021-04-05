@@ -30,6 +30,7 @@ namespace blackjack{
 	{
 		os << "Dealer, chips count: " << dealer.chips_ << "\nHand: ";
 		dealer.PrintHand(os);
+		os << std::endl;
 
 		return os;
 	}

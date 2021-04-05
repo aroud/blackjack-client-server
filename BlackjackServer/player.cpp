@@ -2,11 +2,11 @@
 
 namespace blackjack {
 
-	Player::Player(const ControlSystem& cs, size_t player_id, size_t initial_chips) : Entity(initial_chips), control_system_(cs), player_id_(player_id) {}
+	Player::Player(std::shared_ptr<ControlSystem> cs, size_t player_id, size_t initial_chips) : Entity(initial_chips), control_system_(cs), player_id_(player_id) {}
 	
 	Turn Player::MakeTurn()
 	{
-		return control_system_.GetTurn();
+		return control_system_->GetTurn();
 	}
 
 	void Player::PrintHand(std::ostream& os) const
@@ -25,6 +25,7 @@ namespace blackjack {
 	{
 		os << "ID: " << p.player_id_ << ",chips count: " << p.chips_ << "\nHand: ";
 		p.PrintHand(os);
+		os << std::endl;
 		
 		return os;
 	}

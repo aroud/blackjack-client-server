@@ -38,14 +38,14 @@ namespace blackjack {
 		void PlayRound();
 
 		void EndRound();
-	private:
+	//private:
 		RoundResults CheckWin(std::shared_ptr<Player> player_ptr, Dealer& dealer);
 		
 		GameStatus game_status_;
 
 		Deck deck_;
 
-		const ControlSystem& cs_;
+		std::shared_ptr<ControlSystem> cs_;
 
 		std::vector<std::shared_ptr<Player>> player_ptr_vect_;
 

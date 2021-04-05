@@ -7,7 +7,7 @@ namespace blackjack {
 
     class Player : public Entity {
     public:
-        Player(const ControlSystem& cs, size_t player_id, size_t initial_chips);
+        Player(std::shared_ptr<ControlSystem> cs, size_t player_id, size_t initial_chips);
   
         virtual Turn MakeTurn() override;
 
@@ -15,7 +15,7 @@ namespace blackjack {
 
         size_t GetID() const;
 
-        const ControlSystem& control_system_;
+        std::shared_ptr<ControlSystem> control_system_;
 
         friend std::ostream& operator<<(std::ostream& os, const Player& p);
     private:

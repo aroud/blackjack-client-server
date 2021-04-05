@@ -4,7 +4,7 @@ namespace blackjack {
 
 	Game::Game(size_t deck_units_number):
 		deck_(deck_units_number),
-		cs_(ConsoleInputSystem()),
+		cs_(new ConsoleInputSystem()),
 		game_status_(GameStatus::started),
 		dealer_(chips_constants::kDealerDefaultChipsNumber)
 	{}
@@ -21,7 +21,8 @@ namespace blackjack {
 	{
 		for (auto player_ptr : player_ptr_vect_)
 		{
-			size_t bet = player_ptr->control_system_.StartRound(chips_constants::kMinBet, chips_constants::kMaxBet);
+			std::cout << *player_ptr;
+			size_t bet = /*player_ptr->control_system_*/cs_->StartRound(chips_constants::kMinBet, chips_constants::kMaxBet);
 			size_t player_id = player_ptr->GetID();
 			player_ptr->SetChips(player_ptr->GetChips() - bet);
 

@@ -24,9 +24,10 @@ namespace blackjack {
 				result_sum += 1;
 				ace_in_hand = true;
 				break;
-			default:
+			default: {
 				int card_value = static_cast<int>(card_rank);
 				result_sum += card_value;
+			}
 				break;
 			}
 		}

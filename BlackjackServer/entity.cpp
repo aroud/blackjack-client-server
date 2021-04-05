@@ -18,9 +18,10 @@ namespace blackjack {
 		case blackjack::Turn::doubleDown:
 			bet *= 2;
 			[[fallthrough]];
-		case blackjack::Turn::hit:
+		case blackjack::Turn::hit: {
 			Card card = deck.getCard();
 			hand_.AddCard(card);
+		}
 			break;
 		case blackjack::Turn::surrender:
 			bet /= 2;

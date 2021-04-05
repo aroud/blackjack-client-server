@@ -23,7 +23,8 @@ namespace blackjack {
 	}
 
 	void Deck::Shuffle() {
-		std::random_shuffle(begin(cards_), end(cards_));
+		auto rng = std::default_random_engine{};
+		std::shuffle(std::begin(cards_), std::end(cards_), rng);
 	}
 
 	void Deck::Reset()

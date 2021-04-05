@@ -2,6 +2,8 @@
 
 namespace blackjack {
 
+    ConsoleInputSystem::ConsoleInputSystem() {}
+
     Turn blackjack::ConsoleInputSystem::GetTurn() const
     {
         std::string input;
@@ -40,6 +42,10 @@ namespace blackjack {
 
     size_t blackjack::ConsoleInputSystem::StartRound(size_t min_bet, size_t max_bet) const
     {
-        return size_t();
+        size_t result = 0;
+        do {
+            std::cin >> result;
+        } while (!((result == 0) || (result >= min_bet && result <= max_bet)));
+        return result;
     }
 }

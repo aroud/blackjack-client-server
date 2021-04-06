@@ -1,7 +1,7 @@
-#include "deck.h"
+#include "game.h"
 
 int main() {
-	blackjack::Deck deck(2);
-	std::cout << deck << std::endl;
+	blackjack::Game game(2);
+	game.PlayGame();
 	return 0;
 }

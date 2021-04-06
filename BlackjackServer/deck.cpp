@@ -23,13 +23,31 @@ namespace blackjack {
 	}
 
 	void Deck::Shuffle() {
-		std::random_shuffle(begin(cards_), end(cards_));
+		auto rd = std::random_device{};
+		auto rng = std::default_random_engine{ rd() };
+		std::shuffle(std::begin(cards_), std::end(cards_), rng);
+	}
+
+	void Deck::Reset()
+	{
+		cards_.clear();
+		InitCards();
+		Shuffle();
+	}
+
+	Card Deck::getCard()
+	{
+		if (cards_.empty()) {
+			Reset();
+		}
+		Card card = cards_.back();
+		cards_.pop_back();
+		return card;
 	}
 
 	std::ostream& operator<< (std::ostream& os, const Deck& deck) {
 		for (const auto& card : deck.cards_) {
-			
-			std::cout << static_cast<int>(card.GetRank()) << " " << static_cast<int>(card.GetSuite()) << "\n";
+			os << card;
 		}
 		return os;
 	}

@@ -6,13 +6,18 @@ namespace blackjack {
 	
 	Turn Player::MakeTurn()
 	{
-		return control_system_->GetTurn();
+		return control_system_->GetTurn(*this);
 	}
 
 	void Player::PrintHand(std::ostream& os) const
 	{
-		for (size_t i = 0; i < hand_.GetSize(); ++i) {
-			os << hand_[i];
+		if (!hand_.GetSize()) {
+			os << "(empty)\n";
+		}
+		else {
+			for (size_t i = 0; i < hand_.GetSize(); ++i) {
+				os << hand_[i];
+			}
 		}
 	}
 
@@ -23,9 +28,8 @@ namespace blackjack {
 
 	std::ostream& operator<<(std::ostream& os, const Player& p)
 	{
-		os << "ID: " << p.player_id_ << ",chips count: " << p.chips_ << "\nHand: ";
+		os << "Player, ID: " << p.player_id_ << ", chips count: " << p.chips_ << "\nHand: ";
 		p.PrintHand(os);
-		os << std::endl;
 		
 		return os;
 	}

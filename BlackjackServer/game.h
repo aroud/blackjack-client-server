@@ -5,6 +5,7 @@
 #include <utility>
 #include <iostream>
 #include <functional>
+#include <algorithm>
 
 #include "player.h"
 #include "dealer.h"
@@ -38,8 +39,10 @@ namespace blackjack {
 		void PlayRound();
 
 		void EndRound();
+
+		void PlayGame();
 	//private:
-		RoundResults CheckWin(std::shared_ptr<Player> player_ptr, Dealer& dealer);
+		RoundResults CheckWin(std::shared_ptr<Player> player_ptr);
 		
 		GameStatus game_status_;
 

@@ -11,6 +11,7 @@ namespace blackjack {
 
 	void Entity::DoTurnActions(Turn turn, Deck& deck, size_t& bet)
 	{
+		made_turn = true;
 		switch (turn)
 		{
 		case blackjack::Turn::stand:

@@ -2,9 +2,6 @@
 
 int main() {
 	blackjack::Game game(2);
-	game.RegisterPlayers();
-	game.BeginRound();
-	game.PlayRound();
-	game.EndRound();
+	game.PlayGame();
 	return 0;
 }

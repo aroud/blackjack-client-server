@@ -12,7 +12,7 @@ namespace blackjack {
     public:
         ConsoleInputSystem();
 
-        virtual Turn GetTurn() const override;
+        virtual Turn GetTurn(const Entity& e) const override;
 
         virtual size_t StartRound(size_t min_bet, size_t max_bet) const override;
     };

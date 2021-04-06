@@ -38,6 +38,8 @@ namespace blackjack {
 		Hand& GetHand();
 
 		bool has_surrended = false;
+
+		bool made_turn = false;
 	protected:
 		virtual void PrintHand(std::ostream& os) const = 0;
 

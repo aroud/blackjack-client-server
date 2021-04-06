@@ -4,7 +4,7 @@ namespace blackjack {
 
     ConsoleInputSystem::ConsoleInputSystem() {}
 
-    Turn blackjack::ConsoleInputSystem::GetTurn() const
+    Turn blackjack::ConsoleInputSystem::GetTurn(const Entity& e) const
     {
         std::string input;
 
@@ -12,8 +12,10 @@ namespace blackjack {
 
         Turn turn = Turn::stand;
 
-        std::cout << "Input turn {stand, hit, doubleDown, surrender}:\n";
+        
         do {
+            std::cout << "Input turn {stand, hit, doubleDown, surrender} in you have 2 cards only or\n" <<
+                "{hit, stand} on other cases:\n";
             std::cin >> input;
             if (input == "stand") {
                 correct_input = true;
@@ -25,13 +27,17 @@ namespace blackjack {
                 }
                 else {
                     if (input == "doubleDown") {
-                        turn = Turn::doubleDown;
-                        correct_input = true;
+                        if (!e.made_turn) {
+                            turn = Turn::doubleDown;
+                            correct_input = true;
+                        }
                     }
                     else {
                         if (input == "surrender") {
-                            turn = Turn::surrender;
-                            correct_input = true;
+                            if (!e.made_turn) {
+                                turn = Turn::surrender;
+                                correct_input = true;
+                            }
                         }
                     }
                 }
@@ -44,8 +50,9 @@ namespace blackjack {
     size_t blackjack::ConsoleInputSystem::StartRound(size_t min_bet, size_t max_bet) const
     {
         size_t result = 0;
-        std::cout << "Input your bet (between " << min_bet << " and " << max_bet << ") or 0 to exit game:\n";
+        
         do {
+            std::cout << "Input your bet (between " << min_bet << " and " << max_bet << ") or 0 to exit game:\n";
             std::cin >> result;
         } while (!((result == 0) || (result >= min_bet && result <= max_bet)));
         return result;

@@ -22,7 +22,9 @@ namespace blackjack {
 	enum class GameStatus {
 		started,
 		playerRegistration,
-		inProcess,
+		makingBets,
+		inRound,
+		checkingResults,
 		ended
 	};
 

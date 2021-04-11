@@ -4,7 +4,7 @@ namespace blackjack {
 
     ConsoleInputSystem::ConsoleInputSystem() {}
 
-    Turn blackjack::ConsoleInputSystem::GetTurn(const Entity& e) const
+    Turn blackjack::ConsoleInputSystem::GetTurn(const bool made_turn) const
     {
         std::string input;
 
@@ -27,14 +27,14 @@ namespace blackjack {
                 }
                 else {
                     if (input == "doubleDown") {
-                        if (!e.made_turn) {
+                        if (!made_turn) {
                             turn = Turn::doubleDown;
                             correct_input = true;
                         }
                     }
                     else {
                         if (input == "surrender") {
-                            if (!e.made_turn) {
+                            if (!made_turn) {
                                 turn = Turn::surrender;
                                 correct_input = true;
                             }

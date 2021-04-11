@@ -1,4 +1,5 @@
 #include <enet/enet.h>
+#include "json.hpp"
 
 #include <iostream>
 #include <string>
@@ -51,10 +52,16 @@ int main(int argc, char** argv)
             uint8_t* ptr = nullptr;
             std::ostringstream os;
             std::string str;
+            std::string from_server;
+            ENetPacket* packet2 = nullptr;
             switch (event.type) {
             case ENET_EVENT_TYPE_CONNECT:
                 std::cout << "(Server) We got a new connection from\n" << event.peer->address.host << " host, " <<
                     event.peer->address.port << " port\n";
+                 from_server = "hy!\n";
+                 packet2 = enet_packet_create(from_server.c_str(), strlen(from_server.c_str()) + 1, ENET_PACKET_FLAG_RELIABLE);
+                /* Send the packet to the peer over channel id 0. */
+                enet_peer_send(event.peer, 0, packet2);
                 break;
 
             case ENET_EVENT_TYPE_RECEIVE:

@@ -34,16 +34,28 @@ namespace blackjack {
 		case blackjack::GameStatus::playerRegistration:
 			result = "playerRegistration";
 			break;
-		case blackjack::GameStatus::inProcess:
-			result = "inProcess";
+		case blackjack::GameStatus::inRound:
+			result = "inRound";
 			break;
 		case blackjack::GameStatus::ended:
 			result = "ended";
+			break;
+		case blackjack::GameStatus::checkingResults:
+			result = "checkingResults";
+			break;
+		case blackjack::GameStatus::makingBets:
+			result = "makingBets";
 			break;
 		default:
 			break;
 		}
 		return result;
+	}
+
+	nlohmann::json ToJson(std::string& type, std::string& body) {
+		nlohmann::json j;
+		j["type"] = type;
+		j[]
 	}
 
 	std::string ToString(Rank rank);
@@ -66,7 +78,7 @@ namespace blackjack {
 
 	void Game::BeginRound()
 	{
-		game_status_ = GameStatus::inProcess;
+		game_status_ = GameStatus::makingBets;
 
 		std::cout << "Making bets:\n";
 		for (auto it = player_ptr_vect_.begin(); it != player_ptr_vect_.end(); ++it)
@@ -108,6 +120,8 @@ namespace blackjack {
 
 	void Game::PlayRound()
 	{
+		game_status_ = GameStatus::inRound;
+
 		Card d_card1 = deck_.getCard();
 		Card d_card2 = deck_.getCard();
 		dealer_.GetHand().AddCard(d_card1);
@@ -160,6 +174,8 @@ namespace blackjack {
 
 	void Game::EndRound()
 	{
+		game_status_ = GameStatus::checkingResults;
+
 		std::cout << "Checking results:\n";
 		for (auto player_ptr : player_ptr_vect_)
 		{
@@ -255,14 +271,18 @@ namespace blackjack {
 		using json = nlohmann::json;
 		json j;
 
-		j["game_status"] = ToString(game_status_);
+		j["type"] = "game_info";
 
-		j["curr_player_num"] = player_ptr_vect_.size();
+		j["min_bet"] = chips_constants::kMinBet;
+		j["max_bet"] = chips_constants::kMaxBet;
+
+		j["game_status"] = ToString(game_status_);
 
 		j["curr_player_id"] = curr_player_id_;
 
 		std::vector < std::pair<size_t, std::vector<std::string>>> player_cards;
 		std::vector < std::pair<size_t, size_t>> player_chips;
+
 		for (auto ptr : player_ptr_vect_) {
 			auto& hand = ptr->GetHand();
 			std::vector<std::string> cards;
@@ -271,11 +291,14 @@ namespace blackjack {
 			}
 			player_cards.emplace_back(ptr->GetID(), cards);
 			player_chips.emplace_back(ptr->GetID(), ptr->GetChips());
+			if (ptr->GetID() == curr_player_id_) {
+				j["player_made_turn"] = ptr->made_turn;
+			}
 		}
-
-
+		
 		j["player_cards"] = player_cards;
 		j["player_chips"] = player_chips;
+		
 
 		j["dealer_chips"] = dealer_.GetChips();
 

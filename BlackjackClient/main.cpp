@@ -25,6 +25,18 @@ void SendENetMessage(std::string message, ENetPeer* peer) {
     }
 }
 
+void PrintSituation(GameStub& game_stub) {
+    std::cout << "Current situation:\n";
+    for (auto& p : game_stub.players_)
+    {
+        std::cout << "Player " << p.player_id_ << ", cards: ";
+        for (auto& c : p.cards_) {
+            std::cout << c << "\t";
+        }
+        std::cout << "\nChips: " << p.chips_ << "\n";
+    }
+}
+
 void HandleMessage(std::string& message, GameStub& game_stub, ENetPeer* peer) {
     nlohmann::json j = message;
     std::string type = j["type"].get<std::string>();
@@ -58,6 +70,10 @@ void HandleMessage(std::string& message, GameStub& game_stub, ENetPeer* peer) {
         game_stub.dealer_.cards_ = j["dealer_cards"].get<std::vector<std::string>>();
         game_stub.dealer_.chips_ = j["dealer_chips"].get<size_t>();
 
+        if (game_status == "ended") {
+            std::cout << "Sent message to start the game.\n";
+            SendENetMessage("startGame", peer);
+        }
         if (game_status == "playerRegistration") {
             std::cout << "Register the game? (y/n)\n";
             std::string temp;
@@ -79,7 +95,8 @@ void HandleMessage(std::string& message, GameStub& game_stub, ENetPeer* peer) {
         else if (game_status == "inRound") {
             
             if (curr_player_id == game_stub.client_idx_) {
-
+                PrintSituation(game_stub);
+                
                 blackjack::Turn turn = game_stub.cs_.GetTurn(game_stub.player_made_turn_);
                 std::string result;
                 switch (turn)
@@ -103,6 +120,7 @@ void HandleMessage(std::string& message, GameStub& game_stub, ENetPeer* peer) {
             }
         }
         else if (game_status == "makingBets") {
+            PrintSituation(game_stub);
             if (curr_player_id == game_stub.client_idx_) {
                 size_t bet = game_stub.cs_.StartRound(game_stub.min_bet_, game_stub.max_bet_);
             }
@@ -184,13 +202,5 @@ int main(int argc, char** argv)
                 break;
             }
         }
-
-        //printf("Say > ");
-        //gets(message);
-
-        /*if (strlen(message) > 0) {
-            ENetPacket* packet = enet_packet_create(message, strlen(message) + 1, ENET_PACKET_FLAG_RELIABLE);
-            enet_peer_send(peer, 0, packet);
-        }*/
     }
 }

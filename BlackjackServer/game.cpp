@@ -55,7 +55,8 @@ namespace blackjack {
 	nlohmann::json ToJson(std::string& type, std::string& body) {
 		nlohmann::json j;
 		j["type"] = type;
-		j[]
+		j["body"] = body;
+		return j;
 	}
 
 	std::string ToString(Rank rank);
@@ -72,8 +73,9 @@ namespace blackjack {
 	{
 		game_status_ = GameStatus::playerRegistration;
 
-		player_ptr_vect_.push_back(std::make_shared<Player>(cs_, 1, chips_constants::kPlayerDefaultChipsNumber));
-		player_ptr_vect_.push_back(std::make_shared<Player>(cs_, 2, chips_constants::kPlayerDefaultChipsNumber));
+		//for not client-server version
+		/*player_ptr_vect_.push_back(std::make_shared<Player>(cs_, 1, chips_constants::kPlayerDefaultChipsNumber));
+		player_ptr_vect_.push_back(std::make_shared<Player>(cs_, 2, chips_constants::kPlayerDefaultChipsNumber));*/
 	}
 
 	void Game::BeginRound()
@@ -263,6 +265,8 @@ namespace blackjack {
 			}
 		}
 		game_status_ = GameStatus::ended;
+		player_ptr_vect_.clear();
+		bets_.clear();
 
 	}
 
@@ -316,6 +320,15 @@ namespace blackjack {
 		j["dealer_cards"] = dealer_cards;
 
 		return j.dump();
+	}
+
+	void Game::ClearGame()
+	{
+		game_status_ = GameStatus::ended;
+		player_ptr_vect_.clear();
+		bets_.clear();
+		dealer_.SetChips(chips_constants::kDealerDefaultChipsNumber);
+		dealer_.GetHand().ClearHand();
 	}
 
 	RoundResults Game::CheckWin(std::shared_ptr<Player> player_ptr)

@@ -52,6 +52,8 @@ namespace blackjack {
 		void PlayGame();
 
 		std::string ToJson();
+
+		void ClearGame();
 	//private:
 		RoundResults CheckWin(std::shared_ptr<Player> player_ptr);
 

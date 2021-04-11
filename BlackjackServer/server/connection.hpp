@@ -3,7 +3,7 @@
 #include <array>
 #include <memory>
 #include <boost/asio.hpp>
-#include "reply.hpp"
+#include "response.hpp"
 #include "request.hpp"
 #include "request_handler.hpp"
 #include "request_parser.hpp"

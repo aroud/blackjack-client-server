@@ -6,6 +6,9 @@
 #include <iostream>
 #include <functional>
 #include <algorithm>
+#include <string>
+
+#include "json.hpp"
 
 #include "player.h"
 #include "dealer.h"
@@ -42,8 +45,12 @@ namespace blackjack {
 		void EndRound();
 
 		void PlayGame();
+
+		std::string ToJson();
 	//private:
 		RoundResults CheckWin(std::shared_ptr<Player> player_ptr);
+
+		size_t curr_player_id_ = std::numeric_limits<size_t>::max();
 		
 		GameStatus game_status_;
 

@@ -1,4 +1,4 @@
-#include "reply.hpp"
+#include "response.hpp"
 #include <string>
 
 namespace http {
@@ -39,41 +39,41 @@ namespace http {
             const std::string service_unavailable =
                 "HTTP/1.0 503 Service Unavailable\r\n";
 
-            boost::asio::const_buffer ToBuffer(Reply::StatusType status)
+            boost::asio::const_buffer ToBuffer(Response::StatusType status)
             {
                 switch (status)
                 {
-                case Reply::ok:
+                case Response::ok:
                     return boost::asio::buffer(ok);
-                case Reply::created:
+                case Response::created:
                     return boost::asio::buffer(created);
-                case Reply::accepted:
+                case Response::accepted:
                     return boost::asio::buffer(accepted);
-                case Reply::no_content:
+                case Response::no_content:
                     return boost::asio::buffer(no_content);
-                case Reply::multiple_choices:
+                case Response::multiple_choices:
                     return boost::asio::buffer(multiple_choices);
-                case Reply::moved_permanently:
+                case Response::moved_permanently:
                     return boost::asio::buffer(moved_permanently);
-                case Reply::moved_temporarily:
+                case Response::moved_temporarily:
                     return boost::asio::buffer(moved_temporarily);
-                case Reply::not_modified:
+                case Response::not_modified:
                     return boost::asio::buffer(not_modified);
-                case Reply::bad_request:
+                case Response::bad_request:
                     return boost::asio::buffer(bad_request);
-                case Reply::unauthorized:
+                case Response::unauthorized:
                     return boost::asio::buffer(unauthorized);
-                case Reply::forbidden:
+                case Response::forbidden:
                     return boost::asio::buffer(forbidden);
-                case Reply::not_found:
+                case Response::not_found:
                     return boost::asio::buffer(not_found);
-                case Reply::internal_server_error:
+                case Response::internal_server_error:
                     return boost::asio::buffer(internal_server_error);
-                case Reply::not_implemented:
+                case Response::not_implemented:
                     return boost::asio::buffer(not_implemented);
-                case Reply::bad_gateway:
+                case Response::bad_gateway:
                     return boost::asio::buffer(bad_gateway);
-                case Reply::service_unavailable:
+                case Response::service_unavailable:
                     return boost::asio::buffer(service_unavailable);
                 default:
                     return boost::asio::buffer(internal_server_error);
@@ -89,7 +89,7 @@ namespace http {
 
         } // namespace misc_strings
 
-        std::vector<boost::asio::const_buffer> Reply::ToBuffers()
+        std::vector<boost::asio::const_buffer> Response::ToBuffers()
         {
             std::vector<boost::asio::const_buffer> buffers;
             buffers.push_back(status_strings::ToBuffer(status));
@@ -185,41 +185,41 @@ namespace http {
                 "<body><h1>503 Service Unavailable</h1></body>"
                 "</html>";
 
-            std::string ToString(Reply::StatusType status)
+            std::string ToString(Response::StatusType status)
             {
                 switch (status)
                 {
-                case Reply::ok:
+                case Response::ok:
                     return ok;
-                case Reply::created:
+                case Response::created:
                     return created;
-                case Reply::accepted:
+                case Response::accepted:
                     return accepted;
-                case Reply::no_content:
+                case Response::no_content:
                     return no_content;
-                case Reply::multiple_choices:
+                case Response::multiple_choices:
                     return multiple_choices;
-                case Reply::moved_permanently:
+                case Response::moved_permanently:
                     return moved_permanently;
-                case Reply::moved_temporarily:
+                case Response::moved_temporarily:
                     return moved_temporarily;
-                case Reply::not_modified:
+                case Response::not_modified:
                     return not_modified;
-                case Reply::bad_request:
+                case Response::bad_request:
                     return bad_request;
-                case Reply::unauthorized:
+                case Response::unauthorized:
                     return unauthorized;
-                case Reply::forbidden:
+                case Response::forbidden:
                     return forbidden;
-                case Reply::not_found:
+                case Response::not_found:
                     return not_found;
-                case Reply::internal_server_error:
+                case Response::internal_server_error:
                     return internal_server_error;
-                case Reply::not_implemented:
+                case Response::not_implemented:
                     return not_implemented;
-                case Reply::bad_gateway:
+                case Response::bad_gateway:
                     return bad_gateway;
-                case Reply::service_unavailable:
+                case Response::service_unavailable:
                     return service_unavailable;
                 default:
                     return internal_server_error;
@@ -228,9 +228,9 @@ namespace http {
 
         } // namespace stock_replies
 
-        Reply Reply::StockReply(Reply::StatusType status)
+        Response Response::StockReply(Response::StatusType status)
         {
-            Reply rep;
+            Response rep;
             rep.status = status;
             rep.content = stock_replies::ToString(status);
             rep.headers.resize(2);

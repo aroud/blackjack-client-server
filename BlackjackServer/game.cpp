@@ -24,6 +24,31 @@ namespace blackjack {
 		return result;
 	}
 
+	std::string ToString(GameStatus status) {
+		std::string result;
+		switch (status)
+		{
+		case blackjack::GameStatus::started:
+			result = "started";
+			break;
+		case blackjack::GameStatus::playerRegistration:
+			result = "playerRegistration";
+			break;
+		case blackjack::GameStatus::inProcess:
+			result = "inProcess";
+			break;
+		case blackjack::GameStatus::ended:
+			result = "ended";
+			break;
+		default:
+			break;
+		}
+		return result;
+	}
+
+	std::string ToString(Rank rank);
+	std::string ToString(Suite suite);
+
 	Game::Game(size_t deck_units_number):
 		deck_(deck_units_number),
 		cs_(new ConsoleInputSystem()),
@@ -98,13 +123,14 @@ namespace blackjack {
 			player_ptr->GetHand().AddCard(card2);
 
 			size_t player_id = player_ptr->GetID();
+			curr_player_id_ = player_id;
 
 			auto it = std::find_if(
 				begin(bets_),
 				end(bets_),
 				[player_id](std::pair<size_t,size_t> p) {return p.first == player_id; }
 			);
-
+			std::cout << ToJson() << "\n";
 			Turn turn = Turn::stand;
 			do {
 				std::cout << *player_ptr << "makes turn:\n";
@@ -121,6 +147,9 @@ namespace blackjack {
 
 			std::cout << "After turn actions: " << *player_ptr << "bet:" << it->second << "\n\n";
 		}
+
+		curr_player_id_ = std::numeric_limits<size_t>::max();
+
 		Turn dealer_turn = Turn::stand;
 		do {
 			dealer_turn = dealer_.MakeTurn();
@@ -186,7 +215,9 @@ namespace blackjack {
 
 	void Game::PlayGame()
 	{
+		std::cout << ToJson() << "\n";
 		RegisterPlayers();
+		std::cout << ToJson() << "\n";
 		std::cout << "Initial players:\n";
 		for (auto ptr : player_ptr_vect_) {
 			std::cout << *ptr;
@@ -194,6 +225,7 @@ namespace blackjack {
 		std::cout << std::endl;
 		while (true) {
 			BeginRound();
+			std::cout << ToJson() << "\n";
 			std::cout << "After bets:\n";
 			if (player_ptr_vect_.empty()) {
 				std::cout << "No players left\n";
@@ -208,12 +240,59 @@ namespace blackjack {
 					std::cout << "Player: " << p.first << ", bet: " << p.second << "\n";
 				}
 				std::cout << std::endl;
+				std::cout << ToJson() << "\n";
 				PlayRound();
+
 				EndRound();
 			}
 		}
 		game_status_ = GameStatus::ended;
 
+	}
+
+	std::string Game::ToJson()
+	{
+		using json = nlohmann::json;
+		json j;
+
+		j["game_status"] = ToString(game_status_);
+
+		j["curr_player_num"] = player_ptr_vect_.size();
+
+		j["curr_player_id"] = curr_player_id_;
+
+		std::vector < std::pair<size_t, std::vector<std::string>>> player_cards;
+		std::vector < std::pair<size_t, size_t>> player_chips;
+		for (auto ptr : player_ptr_vect_) {
+			auto& hand = ptr->GetHand();
+			std::vector<std::string> cards;
+			for (size_t i = 0; i < hand.GetSize(); ++i) {
+				cards.push_back(ToString(hand[i].GetRank()) + " " + ToString(hand[i].GetSuite()));
+			}
+			player_cards.emplace_back(ptr->GetID(), cards);
+			player_chips.emplace_back(ptr->GetID(), ptr->GetChips());
+		}
+
+
+		j["player_cards"] = player_cards;
+		j["player_chips"] = player_chips;
+
+		j["dealer_chips"] = dealer_.GetChips();
+
+		std::vector<std::string> dealer_cards;
+		auto& dealer_hand = dealer_.GetHand();
+		if (dealer_hand.GetSize() == 2u) {
+			dealer_cards.push_back(ToString(dealer_hand[0].GetRank()) + " " + ToString(dealer_hand[0].GetSuite()));
+			dealer_cards.push_back("(?)");
+		}
+		else {
+			for (size_t i = 0; i < dealer_hand.GetSize(); ++i) {
+				dealer_cards.push_back(ToString(dealer_hand[i].GetRank()) + " " + ToString(dealer_hand[i].GetSuite()));
+			}
+		}
+		j["dealer_cards"] = dealer_cards;
+
+		return j.dump();
 	}
 
 	RoundResults Game::CheckWin(std::shared_ptr<Player> player_ptr)

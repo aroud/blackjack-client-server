@@ -8,6 +8,8 @@
 #include <algorithm>
 #include <string>
 #include <limits>
+#include <thread>
+#include <mutex>
 
 #include "json.hpp"
 
@@ -51,9 +53,13 @@ namespace blackjack {
 
 		void PlayGame();
 
+		void PlayGameMultiThread();
+
 		std::string ToJson();
 
 		void ClearGame();
+
+		void ChangeActionDone();
 	//private:
 		RoundResults CheckWin(std::shared_ptr<Player> player_ptr);
 
@@ -67,9 +73,12 @@ namespace blackjack {
 
 		std::vector<std::shared_ptr<Player>> player_ptr_vect_;
 
+		std::vector<std::pair<size_t, size_t>> bets_;
+
 		Dealer dealer_;
 
-		std::vector<std::pair<size_t, size_t>> bets_;
+		bool action_done_ = false;
+		std::mutex mut_;
 	};
 }
 

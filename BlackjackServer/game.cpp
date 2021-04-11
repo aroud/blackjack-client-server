@@ -118,6 +118,10 @@ namespace blackjack {
 				}),
 			end(player_ptr_vect_)
 		);
+
+		if (player_ptr_vect_.empty()) {
+			ClearGame();
+		}
 	}
 
 	void Game::PlayRound()
@@ -270,6 +274,12 @@ namespace blackjack {
 
 	}
 
+	void Game::PlayGameMultiThread()
+	{
+		std::thread t(&Game::PlayGame, this);
+		t.join();
+	}
+
 	std::string Game::ToJson()
 	{
 		using json = nlohmann::json;
@@ -324,11 +334,19 @@ namespace blackjack {
 
 	void Game::ClearGame()
 	{
+		std::cout << "Game ended. Clearing game resources.";
 		game_status_ = GameStatus::ended;
 		player_ptr_vect_.clear();
 		bets_.clear();
 		dealer_.SetChips(chips_constants::kDealerDefaultChipsNumber);
 		dealer_.GetHand().ClearHand();
+	}
+
+	void Game::ChangeActionDone()
+	{
+		mut_.lock();
+		action_done_ = !action_done_;
+		mut_.unlock();
 	}
 
 	RoundResults Game::CheckWin(std::shared_ptr<Player> player_ptr)

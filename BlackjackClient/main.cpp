@@ -5,6 +5,8 @@
 #include <string>
 #include <sstream>
 #include <string.h>
+#include <thread>
+#include <chrono>
 
 #include "game.h"
 #include "game_stub.h"
@@ -105,7 +107,7 @@ void HandleMessage(std::string& message, GameStub& game_stub, ENetPeer* peer) {
                     result = "turn stand";
                     break;
                 case blackjack::Turn::hit:
-                    result = "turn stand";
+                    result = "turn hit";
                     break;
                 case blackjack::Turn::doubleDown:
                     result = "turn doubleDown";
@@ -123,13 +125,23 @@ void HandleMessage(std::string& message, GameStub& game_stub, ENetPeer* peer) {
             PrintSituation(game_stub);
             if (curr_player_id == game_stub.client_idx_) {
                 size_t bet = game_stub.cs_.StartRound(game_stub.min_bet_, game_stub.max_bet_);
+                std::string bet_str = "bet " + bet;
+                SendENetMessage(bet_str, peer);
             }
         }
     }
     else if (type == "id") {
         std::string b = j["body"].get<std::string>();
         std::cout << "Got message with id: " << b << "\n";
-        scanf("%zu", &game_stub.client_idx_);
+        if (1 == scanf("%zu", &game_stub.client_idx_)) {
+            if (game_stub.client_idx_ == 0) {
+                //server refused this connection by giving 0 id
+                enet_peer_disconnect(peer, 0);
+            }
+        }
+        else {
+            std::cerr << "Id parsing error" << std::endl;
+        }
     }
     else {
         std::cout << j["body"].get<std::string>() << "\n";
@@ -176,12 +188,11 @@ int main(int argc, char** argv)
 
     ENetEvent event;
     int eventStatus = 1;
-    char message[1024];
     std::string got_message;
     GameStub game_stab;
 
     while (true) {
-        eventStatus = enet_host_service(client, &event, 500);
+        eventStatus = enet_host_service(client, &event, 5000);
 
         if (eventStatus > 0) {
             switch (event.type) {
@@ -202,5 +213,7 @@ int main(int argc, char** argv)
                 break;
             }
         }
+        SendENetMessage("info", peer);
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 }

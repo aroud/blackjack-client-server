@@ -4,64 +4,101 @@
 #include <iostream>
 #include <string>
 #include <sstream> 
+#include <map>
 
 #include "game.h"
 
-int main(int argc, char** argv)
-{
-    ENetAddress address;
-    ENetHost* server;
-    ENetEvent event;
-    int eventStatus;
-
-    //Initialize enet
+int InitEnet() {
     if (enet_initialize() != 0) {
-        std:: cerr << "An error occured while initializing ENet.\n";
-        return EXIT_FAILURE;
+        fprintf(stderr, "An error occured while initializing ENet.\n");
+        return 1;
     }
     atexit(enet_deinitialize);
+    return 0;
+}
+
+
+std::string PacketToString(const ENetPacket* packet) {
+    std::ostringstream oss;
+    for (size_t i = 0; i < packet->dataLength - 1; ++i) {
+        oss << packet->data[i];
+    }
+    return oss.str();
+}
+
+
+std::string ParseAndGetResponseInput(blackjack::Game& game, ENetPeer*, std::map<size_t, ENetPeer*>, std::string message) {
+
+}
+
+void SendENetMessage(std::string message, ENetPeer* peer) {
+    if (message.length()) {
+        ENetPacket* packet = enet_packet_create(message.c_str(), message.length() + 1, ENET_PACKET_FLAG_RELIABLE);
+        enet_peer_send(peer, 0, packet);
+    }
+}
+
+int main(int argc, char** argv)
+{
+    //Initialize enet
+    if (InitEnet()) {
+        return EXIT_FAILURE;
+    }
+
 
     /* Bind the server to the default localhost.     */
     /* A specific host address can be specified by   */
     /* enet_address_set_host (& address, "x.x.x.x"); */
+    ENetAddress address;
     address.host = ENET_HOST_ANY;
-    address.port = 1234;
+    address.port = 6789;
 
-    server = enet_host_create(
+    ENetHost* server = enet_host_create(
         &address,   /* the address to bind the server host to */
         32,         /* allow up to 32 clients and/or outgoing connections */
         2,          /* allow up to 2 channels to be used, 0 and 1 */
         0,          /* assume any amount of incoming bandwidth, 0 for enet dynamic throttling algorithm */
         0           /* assume any amount of outgoing bandwidth, 0 for enet dynamic throttling algorithm */
     );
-
     if (server == NULL) {
         std::cerr << "An error occured while trying to create an ENet server host\n";
         exit(EXIT_FAILURE);
     }
 
-    // c. Connect and user service
+    //create Game instance (4 52-card decks) and start registaration
+    blackjack::Game game(4u);
+    game.RegisterPlayers();
+
+    ENetEvent event;
+    int eventStatus;
     eventStatus = 1;
 
-    blackjack::Game game(2);
+    std::map<size_t, ENetPeer*> connections;
+    size_t connection_id = 1u;
+    std::string message;
 
     while (1) {
-        eventStatus = enet_host_service(server, &event, 500);
+        eventStatus = enet_host_service(server, &event, 10000);
 
         if (eventStatus > 0) {
-            uint8_t* ptr = nullptr;
-            std::ostringstream os;
-            std::string str;
-            std::string from_server;
-            ENetPacket* packet2 = nullptr;
             switch (event.type) {
             case ENET_EVENT_TYPE_CONNECT:
                 std::cout << "(Server) We got a new connection from\n" << event.peer->address.host << " host, " <<
                     event.peer->address.port << " port\n";
-                 from_server = "hy!\n";
-                 packet2 = enet_packet_create(from_server.c_str(), strlen(from_server.c_str()) + 1, ENET_PACKET_FLAG_RELIABLE);
+
+                if (game.game_status_ == blackjack::GameStatus::playerRegistration ||
+                    game.game_status_ == blackjack::GameStatus::ended
+                    ) {
+                    connections[connection_id] = event.peer;
+                    message = "id " + connection_id;
+                    ++connection_id;
+                }
+                else {
+                    message = "id 0";
+                }
+
                 /* Send the packet to the peer over channel id 0. */
-                enet_peer_send(event.peer, 0, packet2);
+                SendENetMessage(message, event.peer);
                 break;
 
             case ENET_EVENT_TYPE_RECEIVE:
@@ -70,41 +107,21 @@ int main(int argc, char** argv)
                     event.packet->dataLength,
                     event.packet->data,
                     event.peer->data,
-                   event.channelID);
-                ptr = event.packet->data;
+                    event.channelID);
                 
-                for (int i = 0; i < event.packet->dataLength; ++i) {
-                    os << ptr[i];
-                }
-                str = (os.str());
-                std::cout << str;
-        
+                message = ParseAndGetResponseInput(game, event.peer, connections, PacketToString(event.packet));
+                SendENetMessage(message, event.peer);
                 // Lets broadcast this message to all
                 enet_host_broadcast(server, 0, event.packet);
                 break;
 
             case ENET_EVENT_TYPE_DISCONNECT:
                 printf("%s disconnected.\n", event.peer->data);
-
                 // Reset client's information
                 event.peer->data = NULL;
                 break;
-
             }
         }
-        else
-        {
-           // std::cout << "0\n";
-        }
     }
-
+    return 0;
 }
-//int main()
-//{
-//    blackjack::Game game(2);
-//    game.PlayGame();
-//    return 0;
-//
-//    return 0;
-//}
-

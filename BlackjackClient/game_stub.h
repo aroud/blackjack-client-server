@@ -9,7 +9,7 @@
 class GameStub
 {
 public:
-	GameStub() {};
+	GameStub() { dealer_.chips_ = blackjack::chips_constants::kDealerDefaultChipsNumber; };
 	std::vector<PlayerStub> players_;
 	PlayerStub dealer_;
 	blackjack::ConsoleInputSystem cs_;

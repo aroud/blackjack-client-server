@@ -41,6 +41,8 @@ namespace blackjack {
 
 	void Game::BeginRound()
 	{
+		game_status_ = GameStatus::inProcess;
+
 		std::cout << "Making bets:\n";
 		for (auto it = player_ptr_vect_.begin(); it != player_ptr_vect_.end(); ++it)
 		{
@@ -210,6 +212,7 @@ namespace blackjack {
 				EndRound();
 			}
 		}
+		game_status_ = GameStatus::ended;
 
 	}
 

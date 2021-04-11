@@ -16,8 +16,9 @@
 namespace blackjack {
 
 	enum class GameStatus {
-		playerRegistration,
 		started,
+		playerRegistration,
+		inProcess,
 		ended
 	};
 

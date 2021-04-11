@@ -7,6 +7,7 @@
 #include <functional>
 #include <algorithm>
 #include <string>
+#include <limits>
 
 #include "json.hpp"
 
@@ -34,6 +35,8 @@ namespace blackjack {
 
 	class Game {
 	public:
+		const size_t kMax = UINT32_MAX;
+
 		Game(size_t deck_units_number);
 
 		void RegisterPlayers();
@@ -50,7 +53,7 @@ namespace blackjack {
 	//private:
 		RoundResults CheckWin(std::shared_ptr<Player> player_ptr);
 
-		size_t curr_player_id_ = std::numeric_limits<size_t>::max();
+		size_t curr_player_id_ = kMax;
 		
 		GameStatus game_status_;
 

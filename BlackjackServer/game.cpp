@@ -359,7 +359,6 @@ namespace blackjack {
 		return action_done_.load();
 	}
 
-
 	GameStatus Game::GetGameStatus() const
 	{
 		return game_status_;
@@ -379,18 +378,23 @@ namespace blackjack {
 		return false;
 	}
 
-	bool Game::RemovePlayer(size_t id)
+	void Game::RemovePlayer(size_t id)
 	{
-		auto it = std::find_if(
-			begin(player_ptr_vect_),
-			end(player_ptr_vect_),
-			[id](std::shared_ptr<Player> ptr) { return ptr->GetID() == id; }
+		player_ptr_vect_.erase(
+			std::remove_if( player_ptr_vect_.begin(),
+							player_ptr_vect_.end(),
+							[id](std::shared_ptr<Player> ptr) {return ptr->GetID() == id; }
+			),
+			player_ptr_vect_.end()
 		);
-		if (it != end(player_ptr_vect_)) {
-			player_ptr_vect_.erase(it);
-			return true;
-		}
-		return false;
+
+		bets_.erase(
+			std::remove_if( bets_.begin(),
+							bets_.end(),
+							[id](std::pair<size_t, size_t> p) {return p.first == id; }
+			),
+			bets_.end()
+		);
 	}
 
 	std::string Game::GameToStr()

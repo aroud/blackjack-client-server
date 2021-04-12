@@ -72,7 +72,7 @@ namespace blackjack {
 
 		bool AddPlayer(size_t id);
 
-		bool RemovePlayer(size_t id);
+		void RemovePlayer(size_t id);
 
 		std::string GameToStr();
 	private:

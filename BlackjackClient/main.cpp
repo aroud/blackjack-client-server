@@ -109,11 +109,10 @@ bool HandleMessage(std::string& message, GameStub& game_stub, ENetPeer* peer) {
             PrintSituation(game_stub);
             game_stub.printed_once = !game_stub.printed_once;
         }
-       
 
         if (game_status == "ended") {
-            std::cout << "Exiting from the game.\n";
-            enet_peer_disconnect(peer, 0);
+            std::cout << "Starting a new game.\n";
+            SendENetMessage("startGame", peer);
             return true;
         }
         if (game_status == "playerRegistration") {

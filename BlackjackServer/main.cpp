@@ -37,7 +37,7 @@ std::string ToJson(const std::string& type, const std::string& body) {
 
 std::string ParseAndGetResponseInput(blackjack::Game& game, ENetPeer* peer,
     std::map<size_t, ENetPeer*>& connections, std::string message, size_t& connection_id) {
-    std::cout << "entering parser\n";
+
     if (message == "register") {
         if (game.GetGameStatus() == blackjack::GameStatus::playerRegistration )
         {  
@@ -57,7 +57,6 @@ std::string ParseAndGetResponseInput(blackjack::Game& game, ENetPeer* peer,
     else if (message == "end registration") {
         if (game.GetGameStatus() == blackjack::GameStatus::playerRegistration) {
             game.PlayGameMultiThread();
-            std::cout << "IM HERE!!!!\n";
             return ToJson("msg", "Registration ended");
         }
     }
@@ -66,7 +65,7 @@ std::string ParseAndGetResponseInput(blackjack::Game& game, ENetPeer* peer,
     }
     else if (message == "startGame") {
         if (game.GetGameStatus() == blackjack::GameStatus::ended) {
-            game.RegisterPlayersMultiThread();
+            game.RegisterPlayers();
             return ToJson("msg", "A new game started!\n");
         }
     }
@@ -77,22 +76,22 @@ std::string ParseAndGetResponseInput(blackjack::Game& game, ENetPeer* peer,
         if (msg_part == "turn") {
             iss >> msg_part;
             if (msg_part == "stand") {
-                game.current_turn_ == blackjack::Turn::stand;
+                game.current_turn_ = blackjack::Turn::stand;
                 game.ChangeActionDone();
                 return ToJson("msg", "Stand turn made.\n");
             }
             else if (msg_part == "hit") {
-                game.current_turn_ == blackjack::Turn::hit;
+                game.current_turn_ = blackjack::Turn::hit;
                 game.ChangeActionDone();
                 return ToJson("msg", "Hit turn made.\n");
             }
             else if (msg_part == "doubleDown") {
-                game.current_turn_ == blackjack::Turn::doubleDown;
+                game.current_turn_ = blackjack::Turn::doubleDown;
                 game.ChangeActionDone();
                 return ToJson("msg", "DoubleDown turn made.\n");
             }
             else if (msg_part == "surrender") {
-                game.current_turn_ == blackjack::Turn::surrender;
+                game.current_turn_ = blackjack::Turn::surrender;
                 game.ChangeActionDone();
                 return ToJson("msg", "Surrender turn made.\n");
             }
@@ -105,14 +104,14 @@ std::string ParseAndGetResponseInput(blackjack::Game& game, ENetPeer* peer,
             iss >> bet;
             game.current_bet_ = bet;
             game.ChangeActionDone();
-            std::string res = "Bet made.";/* + bet;
-            res.push_back('\n');*/
+            std::string res = "Bet made: " +std::to_string(bet);
             return ToJson("msg", res);
         }
         else {
             return ToJson("msg", "Unknown kommand.\n");
         }
     }
+    return "";
 }
 
 void SendENetMessage(std::string message, ENetPeer* peer) {
@@ -150,7 +149,7 @@ int main()
 
     //create Game instance (4 52-card decks) and start registaration
     blackjack::Game game(4u);
-    game.RegisterPlayersMultiThread();
+    game.RegisterPlayers();
 
     ENetEvent event;
     int eventStatus;
@@ -161,7 +160,7 @@ int main()
     std::string message;
 
     while (1) {
-        eventStatus = enet_host_service(server, &event, 0);
+        eventStatus = enet_host_service(server, &event, 50000);
 
         if (eventStatus > 0) {
             switch (event.type) {
@@ -174,19 +173,21 @@ int main()
                 std::cout << "A packet containing " << event.packet->data << " was received.\n";
                 
                 message = ParseAndGetResponseInput(game, event.peer, connections, PacketToString(event.packet), connection_id);
-                std::cout << "sending message: " << message << "\n";
-                SendENetMessage(message, event.peer);
+                if (!message.empty()) {
+                    std::cout << "sending message: " << message << "\n";
+                    SendENetMessage(message, event.peer);
+                }
                 break;
 
             case ENET_EVENT_TYPE_DISCONNECT:
                 std::cout << event.peer->data << " disconnected.\n";
                 // Reset client's information
-                event.peer->data = NULL;
                 for (auto& p : connections) {
                     if (p.second == event.peer) {
                         connections.erase(p.first);
                     }
                 }
+                event.peer->data = NULL;
                 break;
             }
         }

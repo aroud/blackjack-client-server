@@ -33,10 +33,15 @@ void PrintSituation(GameStub& game_stub) {
     {
         std::cout << "Player " << p.player_id_ << ", cards: ";
         for (auto& c : p.cards_) {
-            std::cout << c << "\t";
+            std::cout << c << " ";
         }
         std::cout << "\nChips: " << p.chips_ << "\n";
     }
+    std::cout << "Dealer: ";
+    for (auto& c : game_stub.dealer_.cards_) {
+        std::cout << c << " ";
+    }
+    std::cout << "\nChips: " << game_stub.dealer_.chips_ << "\n";
 }
 
 
@@ -120,7 +125,7 @@ bool HandleMessage(std::string& message, GameStub& game_stub, ENetPeer* peer) {
                 std::cout << "End registration? (y/n)\n";
                 std::cin >> temp;
                 if (temp == "y") {
-                    std::cout << "End registration command sent";
+                    std::cout << "End registration command sent\n";
                     SendENetMessage("end registration", peer);
                     return true;
                 }
@@ -158,7 +163,7 @@ bool HandleMessage(std::string& message, GameStub& game_stub, ENetPeer* peer) {
             PrintSituation(game_stub);
             if (curr_player_id == game_stub.client_idx_) {
                 size_t bet = game_stub.cs_.StartRound(game_stub.min_bet_, game_stub.max_bet_);
-                std::string bet_str = "bet " + bet;
+                std::string bet_str = "bet " + std::to_string(bet);
                 std::cout << "Sent message " + bet_str << "\n";
                 SendENetMessage(bet_str, peer);
                 return true;
@@ -240,7 +245,7 @@ int main()
 
             case ENET_EVENT_TYPE_RECEIVE:
                 got_message = PacketToString(event.packet);
-                std::cout << "Received message:\n" << got_message << "\n";
+                //std::cout << "Received message:\n" << got_message << "\n";
                 skip = HandleMessage(got_message, game_stub, peer);
                 enet_packet_destroy(event.packet);
                 break;

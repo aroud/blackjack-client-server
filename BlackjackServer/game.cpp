@@ -59,22 +59,14 @@ namespace blackjack {
 		deck_(deck_units_number),
 		cs_(new ConsoleInputSystem()),
 		game_status_(GameStatus::started),
-		dealer_(chips_constants::kDealerDefaultChipsNumber)
+		dealer_(chips_constants::kDealerDefaultChipsNumber),
+		current_bet_(0),
+		current_turn_(Turn::stand)
 	{}
 
 	void Game::RegisterPlayers()
 	{
 		game_status_ = GameStatus::playerRegistration;
-
-		//for not client-server version
-		/*player_ptr_vect_.push_back(std::make_shared<Player>(cs_, 1, chips_constants::kPlayerDefaultChipsNumber));
-		player_ptr_vect_.push_back(std::make_shared<Player>(cs_, 2, chips_constants::kPlayerDefaultChipsNumber));*/
-	}
-
-	void Game::RegisterPlayersMultiThread()
-	{
-		std::thread t(&Game::RegisterPlayers, this);
-		t.detach();
 	}
 
 	void Game::BeginRound()
@@ -87,14 +79,17 @@ namespace blackjack {
 			auto player_ptr = *it;
 			std::cout << *player_ptr;
 
+			size_t player_id = player_ptr->GetID();
+			curr_player_id_ = player_id;
+
 			//spinlock
 			while (!GetActionDone()) {
 				std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			}
 			ChangeActionDone();
 
+			curr_player_id_ = UINT32_MAX;
 
-			size_t player_id = player_ptr->GetID();
 			if (current_bet_ && current_bet_ > player_ptr->GetChips()) {
 				std::cout << "not enough chips for bet, bet set to 0\n";
 				current_bet_ = 0;
@@ -235,8 +230,8 @@ namespace blackjack {
 			default:
 				break;
 			}
-			player_ptr->GetHand().ClearHand();
 			std::cout << "After round end: " << *player_ptr << "\n";
+			player_ptr->GetHand().ClearHand();
 		}
 		bets_.clear();
 		std::cout << "After round end, dealer: " << dealer_ << "\n";
@@ -246,7 +241,7 @@ namespace blackjack {
 
 	void Game::PlayGame()
 	{
-		std::cout << "Initial players:\n";
+		std::cout << "\nInitial players:\n";
 		for (auto ptr : player_ptr_vect_) {
 			std::cout << *ptr;
 		}

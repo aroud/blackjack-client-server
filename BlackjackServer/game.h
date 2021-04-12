@@ -45,8 +45,6 @@ namespace blackjack {
 
 		void RegisterPlayers();
 
-		void RegisterPlayersMultiThread();
-
 		void BeginRound();
 
 		void PlayRound();

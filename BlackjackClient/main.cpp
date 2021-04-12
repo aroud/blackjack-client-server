@@ -28,7 +28,7 @@ void SendENetMessage(std::string message, ENetPeer* peer) {
 }
 
 void PrintSituation(GameStub& game_stub) {
-    std::cout << "Current situation:\n";
+    std::cout << "\nCurrent situation:\n";
     for (auto& p : game_stub.players_)
     {
         std::cout << "Player " << p.player_id_ << ", cards: ";
@@ -41,7 +41,7 @@ void PrintSituation(GameStub& game_stub) {
     for (auto& c : game_stub.dealer_.cards_) {
         std::cout << c << " ";
     }
-    std::cout << "\nChips: " << game_stub.dealer_.chips_ << "\n";
+    std::cout << "\nChips: " << game_stub.dealer_.chips_ << "\n\n";
 }
 
 
@@ -54,7 +54,6 @@ ENetPeer* GetPeer(ENetHost* client, std::string host, uint16_t port) {
 
 
 std::string PacketToString(const ENetPacket* packet) {
-    std::cout << "entering parser\n";
     std::ostringstream oss;
     for (size_t i = 0; i < packet->dataLength; ++i) {
         oss << packet->data[i];
@@ -101,8 +100,17 @@ bool HandleMessage(std::string& message, GameStub& game_stub, ENetPeer* peer) {
         game_stub.dealer_.chips_ = j["dealer_chips"].get<size_t>();
 
         if (game_status == "ended") {
-            std::cout << "Sent message to start the game.\n";
-            SendENetMessage("startGame", peer);
+            std::string input;
+            std::cout << "Start a new game? (y/n)\n";
+            std::cin >> input;
+            if (input == "y") {
+                std::cout << "Starting the game.\n";
+                SendENetMessage("startGame", peer);
+            }
+            else {
+                std::cout << "Exiting from the game.\n";
+                enet_peer_disconnect(peer, 0);
+            }
             return true;
         }
         if (game_status == "playerRegistration") {
@@ -114,18 +122,29 @@ bool HandleMessage(std::string& message, GameStub& game_stub, ENetPeer* peer) {
                     std::cout << "Registering to the game...\n";
                     SendENetMessage("register", peer);
                     game_stub.try_to_get_id_ = true;
-                    return true;
+                  
                 }
                 else {
                     std::cout << "Not registering to the game.\n";
+                    enet_peer_disconnect(peer, 0);
                 }
+                return true;
             }
             else if (game_stub.client_idx_) {
                 std::string temp;
                 std::cout << "End registration? (y/n)\n";
+                std::cout << "Currently ";
+                size_t players_num = game_stub.players_.size();
+                if (players_num == 1) {
+                    std::cout << "1 player in the game.\n";
+                }
+                else {
+                    std::cout << players_num << " players in the game\n";
+                }
+                   
                 std::cin >> temp;
                 if (temp == "y") {
-                    std::cout << "End registration command sent\n";
+                    std::cout << "Ending registration.\n";
                     SendENetMessage("end registration", peer);
                     return true;
                 }
@@ -240,7 +259,7 @@ int main()
         if (eventStatus > 0) {
             switch (event.type) {
             case ENET_EVENT_TYPE_CONNECT:
-                std::cout << "Got connection from: " << event.peer->address.host << std::endl;
+                std::cout << "Got connected to the server.\n";
                 break;
 
             case ENET_EVENT_TYPE_RECEIVE:
@@ -251,7 +270,7 @@ int main()
                 break;
 
             case ENET_EVENT_TYPE_DISCONNECT:
-                std::cout << "Client " << event.peer->data << " disconnected.\n";
+                std::cout << "Client disconnected.\n";
                 disconnected = true;
                 event.peer->data = NULL;
                 break;
@@ -265,7 +284,7 @@ int main()
         std::this_thread::sleep_for(std::chrono::seconds(1));
 
         if (!skip) {
-            std::cout << "sending info message\n";
+            //std::cout << "sending info message\n";
             SendENetMessage("info", peer);
             std::this_thread::sleep_for(std::chrono::seconds(2));
         }

@@ -9,7 +9,7 @@
 #include <string>
 #include <limits>
 #include <thread>
-#include <mutex>
+#include <atomic>
 
 #include "json.hpp"
 
@@ -60,10 +60,18 @@ namespace blackjack {
 		void ClearGame();
 
 		void ChangeActionDone();
-	//private:
-		RoundResults CheckWin(std::shared_ptr<Player> player_ptr);
 
-		size_t curr_player_id_ = kMax;
+		bool GetActionDone() const;
+
+		size_t current_bet_;
+
+		Turn current_turn_;
+
+		GameStatus GetGameStatus() const;
+
+		void AddPlayer(size_t id);
+	private:
+		RoundResults CheckWin(std::shared_ptr<Player> player_ptr);
 		
 		GameStatus game_status_;
 
@@ -77,11 +85,12 @@ namespace blackjack {
 
 		Dealer dealer_;
 
-		size_t current_bet_;
+		size_t curr_player_id_ = kMax;
 
-		Turn current_turn_;
-		bool action_done_ = false;
-		std::mutex mut_;
+		
+
+		std::atomic<bool> action_done_ = false;
+		
 	};
 }
 

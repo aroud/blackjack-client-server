@@ -43,29 +43,26 @@ void PrintSituation(GameStub& game_stub) {
 
 void HandleMessage(std::string& message, GameStub& game_stub, ENetPeer* peer) {
     nlohmann::json j = nlohmann::json::parse(message);
-    std::cout << j << std::endl;
    
     std::string type = j["type"].get<std::string>();
 
     if (type == "game_info") {
         std::string game_status = j["game_status"].get<std::string>();
         size_t curr_player_id = j["curr_player_id"].get<size_t>();
-        std::cout << "here1\n";
+        
         game_stub.min_bet_ = j["min_bet"];
         game_stub.max_bet_ = j["max_bet"];
-        std::cout << "here2\n";
+      
         std::vector < std::pair<size_t, std::vector<std::string>>> player_cards = 
             j["player_cards"].get<std::vector < std::pair<size_t, std::vector<std::string>>>>();
-        std::cout << "here3\n";
+       
         std::vector < std::pair<size_t, size_t>> player_chips =
             j["player_chips"].get<std::vector < std::pair<size_t, size_t>>>();
        
-        std::cout << "here4\n";
         bool player_made_turn =
             j["player_made_turn"].get<bool>();
         game_stub.player_made_turn_ = player_made_turn;
 
-        std::cout << "here5\n";
         size_t num = player_cards.size();
        
         game_stub.players_.clear();
@@ -75,31 +72,40 @@ void HandleMessage(std::string& message, GameStub& game_stub, ENetPeer* peer) {
             game_stub.players_[i].chips_ = player_chips[i].second;
             game_stub.players_[i].is_dealer_ = false;
         }
-        std::cout << "here6\n";
+        
         game_stub.dealer_.cards_ = j["dealer_cards"].get<std::vector<std::string>>();
         game_stub.dealer_.chips_ = j["dealer_chips"].get<size_t>();
 
-        std::cout << "here7\n";
         if (game_status == "ended") {
             std::cout << "Sent message to start the game.\n";
             SendENetMessage("startGame", peer);
         }
         if (game_status == "playerRegistration") {
-            std::cout << "Register the game? (y/n)\n";
-            std::string temp;
-            std::cin >> temp;
-            if (temp == "y") {
-                std::cout << "Registering to the game...\n";
-                SendENetMessage("register", peer);
-                game_stub.try_to_get_id_ = true;
+            if (game_stub.client_idx_ == UINT32_MAX) {
+                std::cout << "Register the game? (y/n)\n";
+                std::string temp;
+                std::cin >> temp;
+                if (temp == "y") {
+                    std::cout << "Registering to the game...\n";
+                    SendENetMessage("register", peer);
+                    game_stub.try_to_get_id_ = true;
+                    std::cout << "End registration? (y/n)\n";
+                    std::cin >> temp;
+                    if (temp == "y") {
+                        SendENetMessage("end registration", peer);
+                    }
+                }
+                else {
+                    std::cout << "Not registering to the game.\n";
+                }
+            }
+            else if (game_stub.client_idx_) {
+                std::string temp;
                 std::cout << "End registration? (y/n)\n";
                 std::cin >> temp;
                 if (temp == "y") {
                     SendENetMessage("end registration", peer);
                 }
-            }
-            else {
-                std::cout << "Not registering to the game.\n";
             }
         }
         else if (game_status == "inRound") {
@@ -162,7 +168,6 @@ void HandleMessage(std::string& message, GameStub& game_stub, ENetPeer* peer) {
     else {
         std::cout << j["body"].get<std::string>() << "\n";
     }
-    std::cout << "exiting handler";
 }
 
 ENetPeer* GetPeer(ENetHost* client, std::string host, uint16_t port) {

@@ -39,12 +39,13 @@ std::string ParseAndGetResponseInput(blackjack::Game& game, ENetPeer* peer,
     std::map<size_t, ENetPeer*>& connections, std::string message, size_t& connection_id) {
     std::cout << "entering parser\n";
     if (message == "register") {
-        if (game.game_status_ == blackjack::GameStatus::playerRegistration )
+        if (game.GetGameStatus() == blackjack::GameStatus::playerRegistration )
         {  
             connections[connection_id] = peer;
             std::ostringstream oss;
             oss << connection_id;
             message = oss.str();
+            game.AddPlayer(connection_id);
             ++connection_id;
             return ToJson("id", message);
         }
@@ -54,7 +55,7 @@ std::string ParseAndGetResponseInput(blackjack::Game& game, ENetPeer* peer,
         }
     }
     else if (message == "end registration") {
-        if (game.game_status_ == blackjack::GameStatus::playerRegistration) {
+        if (game.GetGameStatus() == blackjack::GameStatus::playerRegistration) {
             game.PlayGameMultiThread();
             return ToJson("msg", "Registration ended");
         }
@@ -63,7 +64,8 @@ std::string ParseAndGetResponseInput(blackjack::Game& game, ENetPeer* peer,
         return game.ToJson();
     }
     else if (message == "startGame") {
-        if (game.game_status_ == blackjack::GameStatus::ended) {
+        if (game.GetGameStatus() == blackjack::GameStatus::ended) {
+            game.RegisterPlayers();
             return ToJson("msg", "A new game started!\n");
         }
     }
@@ -126,7 +128,6 @@ int main()
         return EXIT_FAILURE;
     }
 
-
     /* Bind the server to the default localhost.     */
     /* A specific host address can be specified by   */
     /* enet_address_set_host (& address, "x.x.x.x"); */
@@ -179,6 +180,11 @@ int main()
                 std::cout << event.peer->data << " disconnected.\n";
                 // Reset client's information
                 event.peer->data = NULL;
+                for (auto& p : connections) {
+                    if (p.second == event.peer) {
+                        connections.erase(p.first);
+                    }
+                }
                 break;
             }
         }

@@ -82,7 +82,7 @@ namespace blackjack {
 			std::cout << *player_ptr;
 
 			//spinlock
-			while (!action_done_) {
+			while (!GetActionDone()) {
 				std::this_thread::sleep_for(std::chrono::milliseconds(500));
 			}
 			ChangeActionDone();
@@ -154,7 +154,7 @@ namespace blackjack {
 				 std::cout << *player_ptr << "makes turn:\n";
 
 				 //spinlock
-				 while (!action_done_) {
+				 while (!GetActionDone()) {
 					 std::this_thread::sleep_for(std::chrono::milliseconds(500));
 				 }
 				 ChangeActionDone();
@@ -315,8 +315,6 @@ namespace blackjack {
 		
 		j["player_cards"] = player_cards;
 		j["player_chips"] = player_chips;
-		
-
 		j["dealer_chips"] = dealer_.GetChips();
 
 		std::vector<std::string> dealer_cards;
@@ -347,9 +345,24 @@ namespace blackjack {
 
 	void Game::ChangeActionDone()
 	{
-		mut_.lock();
-		action_done_ = !action_done_;
-		mut_.unlock();
+		bool b = action_done_.load();
+		action_done_.store(!b);
+	}
+
+	bool Game::GetActionDone() const
+	{
+		return action_done_.load();
+	}
+
+
+	GameStatus Game::GetGameStatus() const
+	{
+		return game_status_;
+	}
+
+	void Game::AddPlayer(size_t id)
+	{
+		player_ptr_vect_.push_back(std::make_shared<Player>(cs_, id, chips_constants::kPlayerDefaultChipsNumber));
 	}
 
 	RoundResults Game::CheckWin(std::shared_ptr<Player> player_ptr)

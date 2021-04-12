@@ -20,15 +20,96 @@ int InitEnet() {
 
 std::string PacketToString(const ENetPacket* packet) {
     std::ostringstream oss;
-    for (size_t i = 0; i < packet->dataLength - 1; ++i) {
+    for (size_t i = 0; i < packet->dataLength; ++i) {
         oss << packet->data[i];
     }
-    return oss.str();
+    std::string res = oss.str();
+    res.pop_back();
+    return res;
 }
 
+std::string ToJson(const std::string& type, const std::string& body) {
+    nlohmann::json j;
+    j["type"] = type;
+    j["body"] = body;
+    return j.dump();
+}
 
-std::string ParseAndGetResponseInput(blackjack::Game& game, ENetPeer*, std::map<size_t, ENetPeer*>, std::string message) {
-
+std::string ParseAndGetResponseInput(blackjack::Game& game, ENetPeer* peer,
+    std::map<size_t, ENetPeer*>& connections, std::string message, size_t& connection_id) {
+    std::cout << "entering parser\n";
+    if (message == "register") {
+        if (game.game_status_ == blackjack::GameStatus::playerRegistration )
+        {  
+            connections[connection_id] = peer;
+            std::ostringstream oss;
+            oss << connection_id;
+            message = oss.str();
+            ++connection_id;
+            return ToJson("id", message);
+        }
+        else {
+            message = "0";
+            return ToJson("id", message);
+        }
+    }
+    else if (message == "end registration") {
+        if (game.game_status_ == blackjack::GameStatus::playerRegistration) {
+            game.PlayGameMultiThread();
+            return ToJson("msg", "Registration ended");
+        }
+    }
+    else if (message == "info") {
+        return game.ToJson();
+    }
+    else if (message == "startGame") {
+        if (game.game_status_ == blackjack::GameStatus::ended) {
+            return ToJson("msg", "A new game started!\n");
+        }
+    }
+    else {
+        std::istringstream iss(message);
+        std::string msg_part;
+        iss >> msg_part;
+        if (msg_part == "turn") {
+            iss >> msg_part;
+            if (msg_part == "stand") {
+                game.current_turn_ == blackjack::Turn::stand;
+                game.ChangeActionDone();
+                return ToJson("msg", "Stand turn made.\n");
+            }
+            else if (msg_part == "hit") {
+                game.current_turn_ == blackjack::Turn::hit;
+                game.ChangeActionDone();
+                return ToJson("msg", "Hit turn made.\n");
+            }
+            else if (msg_part == "doubleDown") {
+                game.current_turn_ == blackjack::Turn::doubleDown;
+                game.ChangeActionDone();
+                return ToJson("msg", "DoubleDown turn made.\n");
+            }
+            else if (msg_part == "surrender") {
+                game.current_turn_ == blackjack::Turn::surrender;
+                game.ChangeActionDone();
+                return ToJson("msg", "Surrender turn made.\n");
+            }
+            else {
+                return ToJson("msg", "Unknown kommand.\n");
+            }
+        }
+        else if (msg_part == "bet") {
+            size_t bet;
+            iss >> bet;
+            game.current_bet_ = bet;
+            game.ChangeActionDone();
+            std::string res = "Bet made: " + bet;
+            res.push_back('\n');
+            return ToJson("msg", res);
+        }
+        else {
+            return ToJson("msg", "Unknown kommand.\n");
+        }
+    }
 }
 
 void SendENetMessage(std::string message, ENetPeer* peer) {
@@ -38,7 +119,7 @@ void SendENetMessage(std::string message, ENetPeer* peer) {
     }
 }
 
-int main(int argc, char** argv)
+int main()
 {
     //Initialize enet
     if (InitEnet()) {
@@ -85,38 +166,17 @@ int main(int argc, char** argv)
             case ENET_EVENT_TYPE_CONNECT:
                 std::cout << "(Server) We got a new connection from\n" << event.peer->address.host << " host, " <<
                     event.peer->address.port << " port\n";
-
-                if (game.game_status_ == blackjack::GameStatus::playerRegistration ||
-                    game.game_status_ == blackjack::GameStatus::ended
-                    ) {
-                    connections[connection_id] = event.peer;
-                    message = "id " + connection_id;
-                    ++connection_id;
-                }
-                else {
-                    message = "id 0";
-                }
-
-                /* Send the packet to the peer over channel id 0. */
-                SendENetMessage(message, event.peer);
                 break;
 
             case ENET_EVENT_TYPE_RECEIVE:
-                //printf("(Server) Message from client : %s\n", event.packet->data);
-                printf("A packet of length %u containing \"%s\" was received from %s on channel %u.\n",
-                    event.packet->dataLength,
-                    event.packet->data,
-                    event.peer->data,
-                    event.channelID);
+                std::cout << "A packet containing " << event.packet->data << " was received.\n";
                 
-                message = ParseAndGetResponseInput(game, event.peer, connections, PacketToString(event.packet));
+                message = ParseAndGetResponseInput(game, event.peer, connections, PacketToString(event.packet), connection_id);
                 SendENetMessage(message, event.peer);
-                // Lets broadcast this message to all
-                enet_host_broadcast(server, 0, event.packet);
                 break;
 
             case ENET_EVENT_TYPE_DISCONNECT:
-                printf("%s disconnected.\n", event.peer->data);
+                std::cout << event.peer->data << " disconnected.\n";
                 // Reset client's information
                 event.peer->data = NULL;
                 break;

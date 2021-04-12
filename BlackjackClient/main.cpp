@@ -1,3 +1,5 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <enet/enet.h>
 #include "json.hpp"
 
@@ -40,27 +42,32 @@ void PrintSituation(GameStub& game_stub) {
 }
 
 void HandleMessage(std::string& message, GameStub& game_stub, ENetPeer* peer) {
-    nlohmann::json j = message;
+    nlohmann::json j = nlohmann::json::parse(message);
+    std::cout << j << std::endl;
+   
     std::string type = j["type"].get<std::string>();
 
     if (type == "game_info") {
-
         std::string game_status = j["game_status"].get<std::string>();
-
         size_t curr_player_id = j["curr_player_id"].get<size_t>();
-
+        std::cout << "here1\n";
         game_stub.min_bet_ = j["min_bet"];
         game_stub.max_bet_ = j["max_bet"];
-   
+        std::cout << "here2\n";
         std::vector < std::pair<size_t, std::vector<std::string>>> player_cards = 
             j["player_cards"].get<std::vector < std::pair<size_t, std::vector<std::string>>>>();
+        std::cout << "here3\n";
         std::vector < std::pair<size_t, size_t>> player_chips =
             j["player_chips"].get<std::vector < std::pair<size_t, size_t>>>();
+       
+        std::cout << "here4\n";
         bool player_made_turn =
             j["player_made_turn"].get<bool>();
+        game_stub.player_made_turn_ = player_made_turn;
 
+        std::cout << "here5\n";
         size_t num = player_cards.size();
-
+       
         game_stub.players_.clear();
         for (size_t i = 0; i < num; ++i) {
             game_stub.players_.emplace_back(player_cards[i].first, false, player_cards[i].second, player_chips[i].second);
@@ -68,10 +75,11 @@ void HandleMessage(std::string& message, GameStub& game_stub, ENetPeer* peer) {
             game_stub.players_[i].chips_ = player_chips[i].second;
             game_stub.players_[i].is_dealer_ = false;
         }
-
+        std::cout << "here6\n";
         game_stub.dealer_.cards_ = j["dealer_cards"].get<std::vector<std::string>>();
         game_stub.dealer_.chips_ = j["dealer_chips"].get<size_t>();
 
+        std::cout << "here7\n";
         if (game_status == "ended") {
             std::cout << "Sent message to start the game.\n";
             SendENetMessage("startGame", peer);
@@ -83,7 +91,7 @@ void HandleMessage(std::string& message, GameStub& game_stub, ENetPeer* peer) {
             if (temp == "y") {
                 std::cout << "Registering to the game...\n";
                 SendENetMessage("register", peer);
-
+                game_stub.try_to_get_id_ = true;
                 std::cout << "End registration? (y/n)\n";
                 std::cin >> temp;
                 if (temp == "y") {
@@ -129,13 +137,21 @@ void HandleMessage(std::string& message, GameStub& game_stub, ENetPeer* peer) {
                 SendENetMessage(bet_str, peer);
             }
         }
+
+        if (game_stub.client_idx_ == UINT32_MAX && !game_stub.try_to_get_id_)
+        {
+            std::cout << "Disconnecting, because its not possible to enter the game";
+            enet_peer_disconnect(peer, 0);
+        }
     }
     else if (type == "id") {
         std::string b = j["body"].get<std::string>();
         std::cout << "Got message with id: " << b << "\n";
+        
         if (1 == scanf("%zu", &game_stub.client_idx_)) {
             if (game_stub.client_idx_ == 0) {
                 //server refused this connection by giving 0 id
+                std::cout << "Got 0 player idx, disconnecting";
                 enet_peer_disconnect(peer, 0);
             }
         }
@@ -146,9 +162,10 @@ void HandleMessage(std::string& message, GameStub& game_stub, ENetPeer* peer) {
     else {
         std::cout << j["body"].get<std::string>() << "\n";
     }
+    std::cout << "exiting handler";
 }
 
-ENetPeer* GetPeer(ENetHost* client, std::string host, size_t port) {
+ENetPeer* GetPeer(ENetHost* client, std::string host, uint16_t port) {
     ENetAddress address;
     enet_address_set_host(&address, host.c_str());
     address.port = port;
@@ -157,17 +174,21 @@ ENetPeer* GetPeer(ENetHost* client, std::string host, size_t port) {
 
 
 std::string PacketToString(const ENetPacket* packet) {
+    std::cout << "entering parser\n";
     std::ostringstream oss;
-    for (size_t i = 0; i < packet->dataLength - 1; ++i) {
+    for (size_t i = 0; i < packet->dataLength; ++i) {
         oss << packet->data[i];
     }
-    return oss.str();
+    std::string res = oss.str();
+    res.pop_back();
+    return res;
 }
 
 
-int main(int argc, char** argv)
+int main()
 {
     if (InitEnet()) {
+        std::cerr << "ENet init failure";
         return EXIT_FAILURE;
     }
    
@@ -192,7 +213,7 @@ int main(int argc, char** argv)
     GameStub game_stab;
 
     while (true) {
-        eventStatus = enet_host_service(client, &event, 5000);
+        eventStatus = enet_host_service(client, &event, 50000);
 
         if (eventStatus > 0) {
             switch (event.type) {
@@ -213,7 +234,8 @@ int main(int argc, char** argv)
                 break;
             }
         }
+        std::cout << "sending info message\n";
         SendENetMessage("info", peer);
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::seconds(3));
     }
 }

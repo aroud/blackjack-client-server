@@ -77,6 +77,9 @@ namespace blackjack {
 
 		Dealer dealer_;
 
+		size_t current_bet_;
+
+		Turn current_turn_;
 		bool action_done_ = false;
 		std::mutex mut_;
 	};

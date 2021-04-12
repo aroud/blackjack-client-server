@@ -104,6 +104,13 @@ bool HandleMessage(std::string& message, GameStub& game_stub, ENetPeer* peer) {
         game_stub.dealer_.cards_ = j["dealer_cards"].get<std::vector<std::string>>();
         game_stub.dealer_.chips_ = j["dealer_chips"].get<size_t>();
 
+        if (game_stub.printed_once)
+        {
+            PrintSituation(game_stub);
+            game_stub.printed_once = !game_stub.printed_once;
+        }
+       
+
         if (game_status == "ended") {
             std::cout << "Exiting from the game.\n";
             enet_peer_disconnect(peer, 0);
@@ -172,6 +179,7 @@ bool HandleMessage(std::string& message, GameStub& game_stub, ENetPeer* peer) {
                 default:
                     break;
                 }
+                game_stub.printed_once = true;
                 SendENetMessage(result, peer);
                 return true;
             }
@@ -182,7 +190,6 @@ bool HandleMessage(std::string& message, GameStub& game_stub, ENetPeer* peer) {
                 size_t bet = game_stub.cs_.StartRound(game_stub.min_bet_, game_stub.max_bet_);
                 std::string bet_str = "bet " + std::to_string(bet);
                 if (bet) {
-                    std::cout << "Sent message " + bet_str << "\n";
                     SendENetMessage(bet_str, peer);
                 }
                 else {

@@ -23,6 +23,9 @@ public:
 
 	bool try_to_get_id_ = false;
 
+	/*to print turn results only once*/
+	bool printed_once = false;
+
 	size_t min_bet_ = client_chips_constants::kMinBet;
 
 	size_t max_bet_ = client_chips_constants::kMaxBet;

@@ -393,6 +393,22 @@ namespace blackjack {
 		return false;
 	}
 
+	std::string Game::GameToStr()
+	{
+		std::ostringstream oss;
+		oss << "\nCurrent situation:\n";
+		for (auto& ptr : player_ptr_vect_)
+		{
+			oss << "Player " << ptr->GetID() << ", cards:\n";
+			ptr->PrintHand(oss);
+			oss << "Chips: " << ptr->GetChips() << "\n";
+		}
+		oss << "Dealer: ";
+		dealer_.PrintHand(oss);
+		oss << "Chips: " << dealer_.GetChips() << "\n\n";
+		return oss.str();
+	}
+
 	RoundResults Game::CheckWin(std::shared_ptr<Player> player_ptr)
 	{
 		RoundResults result = RoundResults::playerLose;

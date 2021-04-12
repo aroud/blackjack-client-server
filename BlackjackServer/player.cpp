@@ -6,7 +6,7 @@ namespace blackjack {
 	
 	Turn Player::MakeTurn()
 	{
-		return control_system_->GetTurn(*this);
+		return control_system_->GetTurn(made_turn);
 	}
 
 	void Player::PrintHand(std::ostream& os) const

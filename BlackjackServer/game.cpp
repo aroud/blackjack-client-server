@@ -24,38 +24,79 @@ namespace blackjack {
 		return result;
 	}
 
+	std::string ToString(GameStatus status) {
+		std::string result;
+		switch (status)
+		{
+		case blackjack::GameStatus::started:
+			result = "started";
+			break;
+		case blackjack::GameStatus::playerRegistration:
+			result = "playerRegistration";
+			break;
+		case blackjack::GameStatus::inRound:
+			result = "inRound";
+			break;
+		case blackjack::GameStatus::ended:
+			result = "ended";
+			break;
+		case blackjack::GameStatus::checkingResults:
+			result = "checkingResults";
+			break;
+		case blackjack::GameStatus::makingBets:
+			result = "makingBets";
+			break;
+		default:
+			break;
+		}
+		return result;
+	}
+
+	std::string ToString(Rank rank);
+	std::string ToString(Suite suite);
+
 	Game::Game(size_t deck_units_number):
 		deck_(deck_units_number),
 		cs_(new ConsoleInputSystem()),
 		game_status_(GameStatus::started),
-		dealer_(chips_constants::kDealerDefaultChipsNumber)
+		dealer_(chips_constants::kDealerDefaultChipsNumber),
+		current_bet_(0),
+		current_turn_(Turn::stand)
 	{}
 
 	void Game::RegisterPlayers()
 	{
 		game_status_ = GameStatus::playerRegistration;
-
-		player_ptr_vect_.push_back(std::make_shared<Player>(cs_, 1, chips_constants::kPlayerDefaultChipsNumber));
-		player_ptr_vect_.push_back(std::make_shared<Player>(cs_, 2, chips_constants::kPlayerDefaultChipsNumber));
 	}
 
 	void Game::BeginRound()
 	{
+		game_status_ = GameStatus::makingBets;
+
 		std::cout << "Making bets:\n";
 		for (auto it = player_ptr_vect_.begin(); it != player_ptr_vect_.end(); ++it)
 		{
 			auto player_ptr = *it;
 			std::cout << *player_ptr;
-			size_t bet = player_ptr->control_system_->StartRound(chips_constants::kMinBet, chips_constants::kMaxBet);
-			std::cout << "\n";
+
 			size_t player_id = player_ptr->GetID();
-			if (bet && bet > player_ptr->GetChips()) {
-				std::cout << "not enough chips for bet, bet set to 0\n";
-				bet = 0;
+			curr_player_id_ = player_id;
+
+			//spinlock
+			while (!GetActionDone()) {
+				std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			}
-			if (bet) {
-				player_ptr->SetChips(player_ptr->GetChips() - bet);
-				bets_.emplace_back(player_id, bet);
+			ChangeActionDone();
+
+			curr_player_id_ = UINT32_MAX;
+
+			if (current_bet_ && current_bet_ > player_ptr->GetChips()) {
+				std::cout << "not enough chips for bet, bet set to 0\n";
+				current_bet_ = 0;
+			}
+			if (current_bet_) {
+				player_ptr->SetChips(player_ptr->GetChips() - current_bet_);
+				bets_.emplace_back(player_id, current_bet_);
 			}
 			else {
 				std::cout << "Player " << player_ptr->GetID() << " ends up with " << player_ptr->GetChips() << " chips.\n" << std::endl;
@@ -77,10 +118,16 @@ namespace blackjack {
 				}),
 			end(player_ptr_vect_)
 		);
+
+		if (player_ptr_vect_.empty()) {
+			ClearGame();
+		}
 	}
 
 	void Game::PlayRound()
 	{
+		game_status_ = GameStatus::inRound;
+
 		Card d_card1 = deck_.getCard();
 		Card d_card2 = deck_.getCard();
 		dealer_.GetHand().AddCard(d_card1);
@@ -96,29 +143,37 @@ namespace blackjack {
 			player_ptr->GetHand().AddCard(card2);
 
 			size_t player_id = player_ptr->GetID();
+			curr_player_id_ = player_id;
 
 			auto it = std::find_if(
 				begin(bets_),
 				end(bets_),
 				[player_id](std::pair<size_t,size_t> p) {return p.first == player_id; }
 			);
-
-			Turn turn = Turn::stand;
+			
 			do {
-				std::cout << *player_ptr << "makes turn:\n";
-				 turn = player_ptr->MakeTurn();
+				 std::cout << *player_ptr << "makes turn:\n";
 
-				 std::cout << "turn: " << ToString(turn) << std::endl;
+				 //spinlock
+				 while (!GetActionDone()) {
+					 std::this_thread::sleep_for(std::chrono::milliseconds(100));
+				 }
+				 ChangeActionDone();
 
-				 player_ptr->DoTurnActions(turn, deck_, it->second);
+				 std::cout << "turn: " << ToString(current_turn_) << std::endl;
 
-				 if (turn == Turn::doubleDown) {
+				 player_ptr->DoTurnActions(current_turn_, deck_, it->second);
+
+				 if (current_turn_ == Turn::doubleDown) {
 					 player_ptr->SetChips(player_ptr->GetChips() - it->second / 2);
 				 }
-			} while (turn == Turn::hit);
+			} while (current_turn_ == Turn::hit);
 
 			std::cout << "After turn actions: " << *player_ptr << "bet:" << it->second << "\n\n";
 		}
+
+		curr_player_id_ = std::numeric_limits<size_t>::max();
+
 		Turn dealer_turn = Turn::stand;
 		do {
 			dealer_turn = dealer_.MakeTurn();
@@ -129,6 +184,8 @@ namespace blackjack {
 
 	void Game::EndRound()
 	{
+		game_status_ = GameStatus::checkingResults;
+
 		std::cout << "Checking results:\n";
 		for (auto player_ptr : player_ptr_vect_)
 		{
@@ -173,8 +230,8 @@ namespace blackjack {
 			default:
 				break;
 			}
-			player_ptr->GetHand().ClearHand();
 			std::cout << "After round end: " << *player_ptr << "\n";
+			player_ptr->GetHand().ClearHand();
 		}
 		bets_.clear();
 		std::cout << "After round end, dealer: " << dealer_ << "\n";
@@ -184,20 +241,20 @@ namespace blackjack {
 
 	void Game::PlayGame()
 	{
-		RegisterPlayers();
-		std::cout << "Initial players:\n";
+		std::cout << "\nInitial players:\n";
 		for (auto ptr : player_ptr_vect_) {
 			std::cout << *ptr;
 		}
 		std::cout << std::endl;
 		while (true) {
 			BeginRound();
-			std::cout << "After bets:\n";
+
 			if (player_ptr_vect_.empty()) {
 				std::cout << "No players left\n";
 				break;
 			}
 			else {
+				std::cout << "After bets:\n";
 				for (auto ptr : player_ptr_vect_) {
 					std::cout << *ptr;
 				}
@@ -206,11 +263,150 @@ namespace blackjack {
 					std::cout << "Player: " << p.first << ", bet: " << p.second << "\n";
 				}
 				std::cout << std::endl;
+
 				PlayRound();
+
 				EndRound();
+				if (player_ptr_vect_.empty()) {
+				std::cout << "No players left\n";
+				break;
+			}
+			}
+		}
+		ClearGame();
+	}
+
+	void Game::PlayGameMultiThread()
+	{
+		std::thread t(&Game::PlayGame, this);
+		t.detach();
+	}
+
+	std::string Game::ToJson()
+	{
+		using json = nlohmann::json;
+		json j;
+
+		j["type"] = "game_info";
+
+		j["min_bet"] = chips_constants::kMinBet;
+		j["max_bet"] = chips_constants::kMaxBet;
+
+		j["game_status"] = ToString(game_status_);
+
+		j["curr_player_id"] = curr_player_id_;
+
+		std::vector < std::pair<size_t, std::vector<std::string>>> player_cards;
+		std::vector < std::pair<size_t, size_t>> player_chips;
+
+		bool player_add_turn_field_added = false;
+		for (auto ptr : player_ptr_vect_) {
+			auto& hand = ptr->GetHand();
+			std::vector<std::string> cards;
+			for (size_t i = 0; i < hand.GetSize(); ++i) {
+				cards.push_back(ToString(hand[i].GetRank()) + " " + ToString(hand[i].GetSuite()));
+			}
+			player_cards.emplace_back(ptr->GetID(), cards);
+			player_chips.emplace_back(ptr->GetID(), ptr->GetChips());
+			if (ptr->GetID() == curr_player_id_) {
+				j["player_made_turn"] = ptr->made_turn;
+				player_add_turn_field_added = true;
 			}
 		}
 
+		if (!player_add_turn_field_added) {
+			j["player_made_turn"] = false;
+		}
+		
+		j["player_cards"] = player_cards;
+		j["player_chips"] = player_chips;
+		j["dealer_chips"] = dealer_.GetChips();
+
+		std::vector<std::string> dealer_cards;
+		auto& dealer_hand = dealer_.GetHand();
+		if (dealer_hand.GetSize() == 2u) {
+			dealer_cards.push_back(ToString(dealer_hand[0].GetRank()) + " " + ToString(dealer_hand[0].GetSuite()));
+			dealer_cards.push_back("(?)");
+		}
+		else {
+			for (size_t i = 0; i < dealer_hand.GetSize(); ++i) {
+				dealer_cards.push_back(ToString(dealer_hand[i].GetRank()) + " " + ToString(dealer_hand[i].GetSuite()));
+			}
+		}
+		j["dealer_cards"] = dealer_cards;
+
+		return j.dump();
+	}
+
+	void Game::ClearGame()
+	{
+		std::cout << "Game ended. Clearing game resources.";
+		game_status_ = GameStatus::ended;
+		player_ptr_vect_.clear();
+		bets_.clear();
+		dealer_.SetChips(chips_constants::kDealerDefaultChipsNumber);
+		dealer_.GetHand().ClearHand();
+	}
+
+	void Game::ChangeActionDone()
+	{
+		bool b = action_done_.load();
+		action_done_.store(!b);
+	}
+
+	bool Game::GetActionDone() const
+	{
+		return action_done_.load();
+	}
+
+
+	GameStatus Game::GetGameStatus() const
+	{
+		return game_status_;
+	}
+
+	bool Game::AddPlayer(size_t id)
+	{
+		auto it = std::find_if(
+			begin(player_ptr_vect_),
+			end(player_ptr_vect_),
+			[id](std::shared_ptr<Player> ptr) { return ptr->GetID() == id; }
+		);
+		if (it == end(player_ptr_vect_)) {
+			player_ptr_vect_.push_back(std::make_shared<Player>(cs_, id, chips_constants::kPlayerDefaultChipsNumber));
+			return true;
+		}
+		return false;
+	}
+
+	bool Game::RemovePlayer(size_t id)
+	{
+		auto it = std::find_if(
+			begin(player_ptr_vect_),
+			end(player_ptr_vect_),
+			[id](std::shared_ptr<Player> ptr) { return ptr->GetID() == id; }
+		);
+		if (it != end(player_ptr_vect_)) {
+			player_ptr_vect_.erase(it);
+			return true;
+		}
+		return false;
+	}
+
+	std::string Game::GameToStr()
+	{
+		std::ostringstream oss;
+		oss << "\nCurrent situation:\n";
+		for (auto& ptr : player_ptr_vect_)
+		{
+			oss << "Player " << ptr->GetID() << ", cards:\n";
+			ptr->PrintHand(oss);
+			oss << "Chips: " << ptr->GetChips() << "\n";
+		}
+		oss << "Dealer: ";
+		dealer_.PrintHand(oss);
+		oss << "Chips: " << dealer_.GetChips() << "\n\n";
+		return oss.str();
 	}
 
 	RoundResults Game::CheckWin(std::shared_ptr<Player> player_ptr)

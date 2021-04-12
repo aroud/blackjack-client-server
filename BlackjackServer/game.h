@@ -6,6 +6,12 @@
 #include <iostream>
 #include <functional>
 #include <algorithm>
+#include <string>
+#include <limits>
+#include <thread>
+#include <atomic>
+
+#include "json.hpp"
 
 #include "player.h"
 #include "dealer.h"
@@ -16,8 +22,11 @@
 namespace blackjack {
 
 	enum class GameStatus {
-		playerRegistration,
 		started,
+		playerRegistration,
+		makingBets,
+		inRound,
+		checkingResults,
 		ended
 	};
 
@@ -30,6 +39,9 @@ namespace blackjack {
 
 	class Game {
 	public:
+		using iterator = std::vector<std::shared_ptr<Player>>::iterator;
+		const size_t kMax = UINT32_MAX;
+
 		Game(size_t deck_units_number);
 
 		void RegisterPlayers();
@@ -41,7 +53,29 @@ namespace blackjack {
 		void EndRound();
 
 		void PlayGame();
-	//private:
+
+		void PlayGameMultiThread();
+
+		std::string ToJson();
+
+		void ClearGame();
+
+		void ChangeActionDone();
+
+		bool GetActionDone() const;
+
+		size_t current_bet_;
+
+		Turn current_turn_;
+
+		GameStatus GetGameStatus() const;
+
+		bool AddPlayer(size_t id);
+
+		bool RemovePlayer(size_t id);
+
+		std::string GameToStr();
+	private:
 		RoundResults CheckWin(std::shared_ptr<Player> player_ptr);
 		
 		GameStatus game_status_;
@@ -52,9 +86,13 @@ namespace blackjack {
 
 		std::vector<std::shared_ptr<Player>> player_ptr_vect_;
 
+		std::vector<std::pair<size_t, size_t>> bets_;
+
 		Dealer dealer_;
 
-		std::vector<std::pair<size_t, size_t>> bets_;
+		size_t curr_player_id_ = kMax;
+
+		std::atomic<bool> action_done_ = false;
 	};
 }
 

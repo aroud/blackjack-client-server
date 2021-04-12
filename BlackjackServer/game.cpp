@@ -249,12 +249,12 @@ namespace blackjack {
 		while (true) {
 			BeginRound();
 
-			std::cout << "After bets:\n";
 			if (player_ptr_vect_.empty()) {
 				std::cout << "No players left\n";
 				break;
 			}
 			else {
+				std::cout << "After bets:\n";
 				for (auto ptr : player_ptr_vect_) {
 					std::cout << *ptr;
 				}
@@ -267,6 +267,10 @@ namespace blackjack {
 				PlayRound();
 
 				EndRound();
+				if (player_ptr_vect_.empty()) {
+				std::cout << "No players left\n";
+				break;
+			}
 			}
 		}
 		ClearGame();
@@ -361,9 +365,32 @@ namespace blackjack {
 		return game_status_;
 	}
 
-	void Game::AddPlayer(size_t id)
+	bool Game::AddPlayer(size_t id)
 	{
-		player_ptr_vect_.push_back(std::make_shared<Player>(cs_, id, chips_constants::kPlayerDefaultChipsNumber));
+		auto it = std::find_if(
+			begin(player_ptr_vect_),
+			end(player_ptr_vect_),
+			[id](std::shared_ptr<Player> ptr) { return ptr->GetID() == id; }
+		);
+		if (it == end(player_ptr_vect_)) {
+			player_ptr_vect_.push_back(std::make_shared<Player>(cs_, id, chips_constants::kPlayerDefaultChipsNumber));
+			return true;
+		}
+		return false;
+	}
+
+	bool Game::RemovePlayer(size_t id)
+	{
+		auto it = std::find_if(
+			begin(player_ptr_vect_),
+			end(player_ptr_vect_),
+			[id](std::shared_ptr<Player> ptr) { return ptr->GetID() == id; }
+		);
+		if (it != end(player_ptr_vect_)) {
+			player_ptr_vect_.erase(it);
+			return true;
+		}
+		return false;
 	}
 
 	RoundResults Game::CheckWin(std::shared_ptr<Player> player_ptr)

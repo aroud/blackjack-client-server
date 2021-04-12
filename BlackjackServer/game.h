@@ -69,7 +69,9 @@ namespace blackjack {
 
 		GameStatus GetGameStatus() const;
 
-		void AddPlayer(size_t id);
+		bool AddPlayer(size_t id);
+
+		bool RemovePlayer(size_t id);
 	private:
 		RoundResults CheckWin(std::shared_ptr<Player> player_ptr);
 		

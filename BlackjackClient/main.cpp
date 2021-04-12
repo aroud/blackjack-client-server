@@ -32,8 +32,13 @@ void PrintSituation(GameStub& game_stub) {
     for (auto& p : game_stub.players_)
     {
         std::cout << "Player " << p.player_id_ << ", cards: ";
-        for (auto& c : p.cards_) {
-            std::cout << c << " ";
+        if (p.cards_.empty()) {
+            std::cout << "(no cards)";
+        }
+        else {
+            for (auto& c : p.cards_) {
+                std::cout << c << " ";
+            }
         }
         std::cout << "\nChips: " << p.chips_ << "\n";
     }
@@ -100,22 +105,13 @@ bool HandleMessage(std::string& message, GameStub& game_stub, ENetPeer* peer) {
         game_stub.dealer_.chips_ = j["dealer_chips"].get<size_t>();
 
         if (game_status == "ended") {
-            std::string input;
-            std::cout << "Start a new game? (y/n)\n";
-            std::cin >> input;
-            if (input == "y") {
-                std::cout << "Starting the game.\n";
-                SendENetMessage("startGame", peer);
-            }
-            else {
-                std::cout << "Exiting from the game.\n";
-                enet_peer_disconnect(peer, 0);
-            }
+            std::cout << "Exiting from the game.\n";
+            enet_peer_disconnect(peer, 0);
             return true;
         }
         if (game_status == "playerRegistration") {
             if (game_stub.client_idx_ == UINT32_MAX && !game_stub.try_to_get_id_) {
-                std::cout << "Register the game? (y/n)\n";
+                std::cout << "Register to the game? (y/n)\n";
                 std::string temp;
                 std::cin >> temp;
                 if (temp == "y") {
@@ -148,10 +144,12 @@ bool HandleMessage(std::string& message, GameStub& game_stub, ENetPeer* peer) {
                     SendENetMessage("end registration", peer);
                     return true;
                 }
+                else {
+                    return false;
+                }
             }
         }
         else if (game_status == "inRound") {
-            
             if (curr_player_id == game_stub.client_idx_) {
                 PrintSituation(game_stub);
                 
@@ -179,12 +177,17 @@ bool HandleMessage(std::string& message, GameStub& game_stub, ENetPeer* peer) {
             }
         }
         else if (game_status == "makingBets") {
-            PrintSituation(game_stub);
             if (curr_player_id == game_stub.client_idx_) {
+                PrintSituation(game_stub);
                 size_t bet = game_stub.cs_.StartRound(game_stub.min_bet_, game_stub.max_bet_);
                 std::string bet_str = "bet " + std::to_string(bet);
-                std::cout << "Sent message " + bet_str << "\n";
-                SendENetMessage(bet_str, peer);
+                if (bet) {
+                    std::cout << "Sent message " + bet_str << "\n";
+                    SendENetMessage(bet_str, peer);
+                }
+                else {
+                    enet_peer_disconnect(peer, 0);
+                }
                 return true;
             }
         }
@@ -254,8 +257,8 @@ int main()
     bool disconnected = false;
 
     while (true) {
-        eventStatus = enet_host_service(client, &event, 50000);
-
+        eventStatus = enet_host_service(client, &event, 500);
+     
         if (eventStatus > 0) {
             switch (event.type) {
             case ENET_EVENT_TYPE_CONNECT:
@@ -264,7 +267,6 @@ int main()
 
             case ENET_EVENT_TYPE_RECEIVE:
                 got_message = PacketToString(event.packet);
-                //std::cout << "Received message:\n" << got_message << "\n";
                 skip = HandleMessage(got_message, game_stub, peer);
                 enet_packet_destroy(event.packet);
                 break;
@@ -281,12 +283,11 @@ int main()
             break;
         }
 
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
         if (!skip) {
-            //std::cout << "sending info message\n";
             SendENetMessage("info", peer);
-            std::this_thread::sleep_for(std::chrono::seconds(2));
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
         }
         else {
             skip = false;

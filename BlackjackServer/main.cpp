@@ -37,7 +37,7 @@ std::string ToJson(const std::string& type, const std::string& body) {
 
 std::string ParseAndGetResponseInput(blackjack::Game& game, ENetPeer* peer,
     std::map<size_t, ENetPeer*>& connections, std::string message, size_t& connection_id) {
-
+  
     if (message == "register") {
         if (game.GetGameStatus() == blackjack::GameStatus::playerRegistration )
         {  
@@ -59,12 +59,16 @@ std::string ParseAndGetResponseInput(blackjack::Game& game, ENetPeer* peer,
             game.PlayGameMultiThread();
             return ToJson("msg", "Registration ended");
         }
+        else {
+            return "";
+        }
     }
     else if (message == "info") {
         return game.ToJson();
     }
     else if (message == "startGame") {
         if (game.GetGameStatus() == blackjack::GameStatus::ended) {
+            connections.clear();
             game.RegisterPlayers();
             return ToJson("msg", "A new game started!\n");
         }
@@ -160,7 +164,7 @@ int main()
     std::string message;
 
     while (1) {
-        eventStatus = enet_host_service(server, &event, 50000);
+        eventStatus = enet_host_service(server, &event, 0);
 
         if (eventStatus > 0) {
             switch (event.type) {
@@ -180,11 +184,19 @@ int main()
                 break;
 
             case ENET_EVENT_TYPE_DISCONNECT:
-                std::cout << event.peer->data << " disconnected.\n";
                 // Reset client's information
-                for (auto& p : connections) {
-                    if (p.second == event.peer) {
-                        connections.erase(p.first);
+                auto iter = connections.begin();
+                auto endIter = connections.end();
+                for (; iter != endIter; ) {
+                    if (iter->second->address.host == event.peer->address.host &&
+                        iter->second->address.port == event.peer->address.port) {
+                        std::cout << "Client removed\n";
+                        size_t id = iter->first;
+                        game.RemovePlayer(id);
+                        iter = connections.erase(iter);
+                    }
+                    else {
+                        ++iter;
                     }
                 }
                 event.peer->data = NULL;

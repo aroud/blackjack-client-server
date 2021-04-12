@@ -57,6 +57,7 @@ std::string ParseAndGetResponseInput(blackjack::Game& game, ENetPeer* peer,
     else if (message == "end registration") {
         if (game.GetGameStatus() == blackjack::GameStatus::playerRegistration) {
             game.PlayGameMultiThread();
+            std::cout << "IM HERE!!!!\n";
             return ToJson("msg", "Registration ended");
         }
     }
@@ -65,7 +66,7 @@ std::string ParseAndGetResponseInput(blackjack::Game& game, ENetPeer* peer,
     }
     else if (message == "startGame") {
         if (game.GetGameStatus() == blackjack::GameStatus::ended) {
-            game.RegisterPlayers();
+            game.RegisterPlayersMultiThread();
             return ToJson("msg", "A new game started!\n");
         }
     }
@@ -104,8 +105,8 @@ std::string ParseAndGetResponseInput(blackjack::Game& game, ENetPeer* peer,
             iss >> bet;
             game.current_bet_ = bet;
             game.ChangeActionDone();
-            std::string res = "Bet made: " + bet;
-            res.push_back('\n');
+            std::string res = "Bet made.";/* + bet;
+            res.push_back('\n');*/
             return ToJson("msg", res);
         }
         else {
@@ -149,7 +150,7 @@ int main()
 
     //create Game instance (4 52-card decks) and start registaration
     blackjack::Game game(4u);
-    game.RegisterPlayers();
+    game.RegisterPlayersMultiThread();
 
     ENetEvent event;
     int eventStatus;
@@ -160,7 +161,7 @@ int main()
     std::string message;
 
     while (1) {
-        eventStatus = enet_host_service(server, &event, 10000);
+        eventStatus = enet_host_service(server, &event, 0);
 
         if (eventStatus > 0) {
             switch (event.type) {
@@ -173,6 +174,7 @@ int main()
                 std::cout << "A packet containing " << event.packet->data << " was received.\n";
                 
                 message = ParseAndGetResponseInput(game, event.peer, connections, PacketToString(event.packet), connection_id);
+                std::cout << "sending message: " << message << "\n";
                 SendENetMessage(message, event.peer);
                 break;
 

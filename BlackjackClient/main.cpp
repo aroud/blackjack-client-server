@@ -1,5 +1,3 @@
-#define _CRT_SECURE_NO_WARNINGS
-
 #include <enet/enet.h>
 #include "json.hpp"
 
@@ -41,7 +39,28 @@ void PrintSituation(GameStub& game_stub) {
     }
 }
 
-void HandleMessage(std::string& message, GameStub& game_stub, ENetPeer* peer) {
+
+ENetPeer* GetPeer(ENetHost* client, std::string host, uint16_t port) {
+    ENetAddress address;
+    enet_address_set_host(&address, host.c_str());
+    address.port = port;
+    return enet_host_connect(client, &address, 2, 0);
+}
+
+
+std::string PacketToString(const ENetPacket* packet) {
+    std::cout << "entering parser\n";
+    std::ostringstream oss;
+    for (size_t i = 0; i < packet->dataLength; ++i) {
+        oss << packet->data[i];
+    }
+    std::string res = oss.str();
+    res.pop_back();
+    return res;
+}
+
+//returns true, if inside the message was sent
+bool HandleMessage(std::string& message, GameStub& game_stub, ENetPeer* peer) {
     nlohmann::json j = nlohmann::json::parse(message);
    
     std::string type = j["type"].get<std::string>();
@@ -79,9 +98,10 @@ void HandleMessage(std::string& message, GameStub& game_stub, ENetPeer* peer) {
         if (game_status == "ended") {
             std::cout << "Sent message to start the game.\n";
             SendENetMessage("startGame", peer);
+            return true;
         }
         if (game_status == "playerRegistration") {
-            if (game_stub.client_idx_ == UINT32_MAX) {
+            if (game_stub.client_idx_ == UINT32_MAX && !game_stub.try_to_get_id_) {
                 std::cout << "Register the game? (y/n)\n";
                 std::string temp;
                 std::cin >> temp;
@@ -89,11 +109,7 @@ void HandleMessage(std::string& message, GameStub& game_stub, ENetPeer* peer) {
                     std::cout << "Registering to the game...\n";
                     SendENetMessage("register", peer);
                     game_stub.try_to_get_id_ = true;
-                    std::cout << "End registration? (y/n)\n";
-                    std::cin >> temp;
-                    if (temp == "y") {
-                        SendENetMessage("end registration", peer);
-                    }
+                    return true;
                 }
                 else {
                     std::cout << "Not registering to the game.\n";
@@ -104,7 +120,9 @@ void HandleMessage(std::string& message, GameStub& game_stub, ENetPeer* peer) {
                 std::cout << "End registration? (y/n)\n";
                 std::cin >> temp;
                 if (temp == "y") {
+                    std::cout << "End registration command sent";
                     SendENetMessage("end registration", peer);
+                    return true;
                 }
             }
         }
@@ -133,6 +151,7 @@ void HandleMessage(std::string& message, GameStub& game_stub, ENetPeer* peer) {
                     break;
                 }
                 SendENetMessage(result, peer);
+                return true;
             }
         }
         else if (game_status == "makingBets") {
@@ -140,53 +159,43 @@ void HandleMessage(std::string& message, GameStub& game_stub, ENetPeer* peer) {
             if (curr_player_id == game_stub.client_idx_) {
                 size_t bet = game_stub.cs_.StartRound(game_stub.min_bet_, game_stub.max_bet_);
                 std::string bet_str = "bet " + bet;
+                std::cout << "Sent message " + bet_str << "\n";
                 SendENetMessage(bet_str, peer);
+                return true;
             }
         }
 
         if (game_stub.client_idx_ == UINT32_MAX && !game_stub.try_to_get_id_)
         {
-            std::cout << "Disconnecting, because its not possible to enter the game";
+            std::cout << "Disconnecting, not entering the game\n";
             enet_peer_disconnect(peer, 0);
+            return true;
         }
+        return false;
     }
     else if (type == "id") {
-        std::string b = j["body"].get<std::string>();
-        std::cout << "Got message with id: " << b << "\n";
+        std::string body = j["body"].get<std::string>();
+        std::istringstream iss(body);
+        size_t id = 0;
+        iss >> id;
+        std::cout << "Got message with id: " << id << "\n";
         
-        if (1 == scanf("%zu", &game_stub.client_idx_)) {
-            if (game_stub.client_idx_ == 0) {
+        if (game_stub.client_idx_ == 0) {
                 //server refused this connection by giving 0 id
                 std::cout << "Got 0 player idx, disconnecting";
                 enet_peer_disconnect(peer, 0);
+                return true;
             }
-        }
         else {
-            std::cerr << "Id parsing error" << std::endl;
+            game_stub.client_idx_ = id;
+            std::cout << "player id: " << game_stub.client_idx_ << "\n";
         }
+        return false;
     }
     else {
         std::cout << j["body"].get<std::string>() << "\n";
+        return false;
     }
-}
-
-ENetPeer* GetPeer(ENetHost* client, std::string host, uint16_t port) {
-    ENetAddress address;
-    enet_address_set_host(&address, host.c_str());
-    address.port = port;
-    return enet_host_connect(client, &address, 2, 0);
-}
-
-
-std::string PacketToString(const ENetPacket* packet) {
-    std::cout << "entering parser\n";
-    std::ostringstream oss;
-    for (size_t i = 0; i < packet->dataLength; ++i) {
-        oss << packet->data[i];
-    }
-    std::string res = oss.str();
-    res.pop_back();
-    return res;
 }
 
 
@@ -215,7 +224,10 @@ int main()
     ENetEvent event;
     int eventStatus = 1;
     std::string got_message;
-    GameStub game_stab;
+    GameStub game_stub;
+
+    bool skip = false;
+    bool disconnected = false;
 
     while (true) {
         eventStatus = enet_host_service(client, &event, 50000);
@@ -228,19 +240,32 @@ int main()
 
             case ENET_EVENT_TYPE_RECEIVE:
                 got_message = PacketToString(event.packet);
-                std::cout << got_message;
-                HandleMessage(got_message, game_stab, peer);
+                std::cout << "Received message:\n" << got_message << "\n";
+                skip = HandleMessage(got_message, game_stub, peer);
                 enet_packet_destroy(event.packet);
                 break;
 
             case ENET_EVENT_TYPE_DISCONNECT:
                 std::cout << "Client " << event.peer->data << " disconnected.\n";
+                disconnected = true;
                 event.peer->data = NULL;
                 break;
             }
         }
-        std::cout << "sending info message\n";
-        SendENetMessage("info", peer);
-        std::this_thread::sleep_for(std::chrono::seconds(3));
+
+        if (disconnected) {
+            break;
+        }
+
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+
+        if (!skip) {
+            std::cout << "sending info message\n";
+            SendENetMessage("info", peer);
+            std::this_thread::sleep_for(std::chrono::seconds(2));
+        }
+        else {
+            skip = false;
+        }
     }
 }

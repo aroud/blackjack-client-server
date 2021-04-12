@@ -45,6 +45,8 @@ namespace blackjack {
 
 		void RegisterPlayers();
 
+		void RegisterPlayersMultiThread();
+
 		void BeginRound();
 
 		void PlayRound();
@@ -87,10 +89,7 @@ namespace blackjack {
 
 		size_t curr_player_id_ = kMax;
 
-		
-
 		std::atomic<bool> action_done_ = false;
-		
 	};
 }
 

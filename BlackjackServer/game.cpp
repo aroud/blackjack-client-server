@@ -71,6 +71,12 @@ namespace blackjack {
 		player_ptr_vect_.push_back(std::make_shared<Player>(cs_, 2, chips_constants::kPlayerDefaultChipsNumber));*/
 	}
 
+	void Game::RegisterPlayersMultiThread()
+	{
+		std::thread t(&Game::RegisterPlayers, this);
+		t.detach();
+	}
+
 	void Game::BeginRound()
 	{
 		game_status_ = GameStatus::makingBets;
@@ -83,7 +89,7 @@ namespace blackjack {
 
 			//spinlock
 			while (!GetActionDone()) {
-				std::this_thread::sleep_for(std::chrono::milliseconds(500));
+				std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			}
 			ChangeActionDone();
 
@@ -155,7 +161,7 @@ namespace blackjack {
 
 				 //spinlock
 				 while (!GetActionDone()) {
-					 std::this_thread::sleep_for(std::chrono::milliseconds(500));
+					 std::this_thread::sleep_for(std::chrono::milliseconds(100));
 				 }
 				 ChangeActionDone();
 
@@ -274,7 +280,7 @@ namespace blackjack {
 	void Game::PlayGameMultiThread()
 	{
 		std::thread t(&Game::PlayGame, this);
-		t.join();
+		t.detach();
 	}
 
 	std::string Game::ToJson()

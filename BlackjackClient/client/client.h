@@ -22,6 +22,8 @@ public:
 	void SendENetMessage(std::string message, ENetPeer* peer);
 
 	void MainCycle();
+
+	GameStub& GetGameStub();
 private:
 	bool HandleMessage();
 

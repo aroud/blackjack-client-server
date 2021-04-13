@@ -59,7 +59,7 @@ void Client::MainCycle()
                 break;
 
             case ENET_EVENT_TYPE_DISCONNECT:
-                std::cout << "Client disconnected.\n";
+                std::cout << "Client disconnected. Press any key to close the game.\n";
                 disconnected = true;
                 event_.peer->data = NULL;
                 break;
@@ -67,6 +67,8 @@ void Client::MainCycle()
         }
 
         if (disconnected) {
+            std::cin.get();
+            std::cin.get();
             break;
         }
 
@@ -80,6 +82,11 @@ void Client::MainCycle()
             skip = false;
         }
     }
+}
+
+GameStub& Client::GetGameStub()
+{
+    return game_stub_;
 }
 
 bool Client::HandleMessage()
@@ -125,7 +132,6 @@ bool Client::HandleMessage()
         }
 
         if (game_status == "ended") {
-            std::cout << "Starting a new game.\n";
             SendENetMessage("startGame", peer_);
             return true;
         }
@@ -239,6 +245,11 @@ bool Client::HandleMessage()
         }
         return false;
     }
+    else if (type == "endGame") {
+        std::cout << j["body"].get<std::string>() << "\n";
+        game_stub_ = GameStub();
+        return false;
+    }
     else {
         std::cout << j["body"].get<std::string>() << "\n";
         return false;
@@ -285,7 +296,7 @@ ENetPeer* Client::GetPeer(const std::string& host, const uint16_t port) const
 int Client::InitEnet()
 {
     if (enet_initialize() != 0) {
-        fprintf(stderr, "An error occured while initializing ENet.\n");
+        std::cerr << "An error occured while initializing ENet.\n";
         return 1;
     }
     atexit(enet_deinitialize);

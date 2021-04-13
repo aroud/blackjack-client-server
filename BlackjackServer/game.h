@@ -41,6 +41,7 @@ namespace blackjack {
 	public:
 		using iterator = std::vector<std::shared_ptr<Player>>::iterator;
 		const size_t kMax = UINT32_MAX;
+		const size_t kMaxPlayers = 7;
 
 		Game(size_t deck_units_number);
 
@@ -75,6 +76,8 @@ namespace blackjack {
 		void RemovePlayer(size_t id);
 
 		std::string GameToStr();
+
+		void TerminatePlayGameThread();
 	private:
 		RoundResults CheckWin(std::shared_ptr<Player> player_ptr);
 		
@@ -93,6 +96,8 @@ namespace blackjack {
 		size_t curr_player_id_ = kMax;
 
 		std::atomic<bool> action_done_ = false;
+
+		std::thread t;
 	};
 }
 

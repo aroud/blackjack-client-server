@@ -81,11 +81,12 @@ void Server::MainCycle()
                 {
                     size_t id = iter->first;
                     game_.RemovePlayer(id);
-                    iter = connections_.erase(iter);
+                    connections_.erase(iter);
                 }
                 else {
                     std::cout << "Ending game by removing clients.\n";
-                    ShutdownServer();
+                    connections_.erase(iter);
+                    EndGame();
                 }
 
                 event_.peer->data = NULL;
@@ -103,7 +104,7 @@ blackjack::Game& Server::GetGame()
 int Server::InitEnet()
 {
     if (enet_initialize() != 0) {
-        fprintf(stderr, "An error occured while initializing ENet.\n");
+        std::cerr << "An error occured while initializing ENet.\n";
         return 1;
     }
     atexit(enet_deinitialize);
@@ -192,7 +193,13 @@ std::string Server::ParseAndGetResponseInput(ENetPeer* peer, std::string message
     return "";
 }
 
-void Server::ShutdownServer()
+void Server::EndGame()
 {
+    game_.TerminatePlayGameThread();
     game_.ClearGame();
+    for (auto& p : connections_) {
+        SendENetMessage(ToJson("endGame", "End previous game."), p.second);
+    }
+    connections_.clear();
+    connection_id_ = 1;
 }

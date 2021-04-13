@@ -24,7 +24,7 @@ private:
 
 	std::string ParseAndGetResponseInput(ENetPeer* peer, std::string message);
 
-	void ShutdownServer();
+	void EndGame();
 
 	ENetEvent event_;
 

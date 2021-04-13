@@ -74,9 +74,8 @@ namespace blackjack {
 		game_status_ = GameStatus::makingBets;
 
 		std::cout << "Making bets:\n";
-		for (auto it = player_ptr_vect_.begin(); it != player_ptr_vect_.end(); ++it)
+		for (auto& player_ptr: player_ptr_vect_)
 		{
-			auto player_ptr = *it;
 			std::cout << *player_ptr;
 
 			size_t player_id = player_ptr->GetID();
@@ -278,7 +277,7 @@ namespace blackjack {
 
 	void Game::PlayGameMultiThread()
 	{
-		std::thread t(&Game::PlayGame, this);
+		t = std::thread(&Game::PlayGame, this);
 		t.detach();
 	}
 
@@ -340,7 +339,7 @@ namespace blackjack {
 
 	void Game::ClearGame()
 	{
-		std::cout << "Game ended. Clearing game resources.";
+		std::cout << "Game ended. Clearing game resources.\n";
 		game_status_ = GameStatus::ended;
 		player_ptr_vect_.clear();
 		bets_.clear();
@@ -411,6 +410,11 @@ namespace blackjack {
 		dealer_.PrintHand(oss);
 		oss << "Chips: " << dealer_.GetChips() << "\n\n";
 		return oss.str();
+	}
+
+	void Game::TerminatePlayGameThread()
+	{
+		t.~thread();
 	}
 
 	RoundResults Game::CheckWin(std::shared_ptr<Player> player_ptr)

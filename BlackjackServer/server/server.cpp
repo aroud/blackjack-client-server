@@ -1,24 +1,9 @@
 #include "server.h"
 
-std::string PacketToString(const ENetPacket* packet) {
-    std::ostringstream oss;
-    for (size_t i = 0; i < packet->dataLength; ++i) {
-        oss << packet->data[i];
-    }
-    std::string res = oss.str();
-    res.pop_back();
-    return res;
-}
+std::string PacketToString(const ENetPacket* packet);
+std::string ToJson(const std::string& type, const std::string& body);
 
-std::string ToJson(const std::string& type, const std::string& body) {
-    nlohmann::json j;
-    j["type"] = type;
-    j["body"] = body;
-    return j.dump();
-}
-
-
-Server::Server(const uint32_t host, const uint16_t port, const size_t decks_number):
+Server::Server(const std::string host, const uint16_t port, const size_t decks_number):
     game_(decks_number)
 {
     /* Initialize enet enviroment */
@@ -26,11 +11,9 @@ Server::Server(const uint32_t host, const uint16_t port, const size_t decks_numb
         throw std::runtime_error("Enet initialization failed");
     }
 
-    /* Bind the server to the default localhost.     */
-    /* A specific host address can be specified by   */
-    /* enet_address_set_host (& address, "x.x.x.x"); */
+    /* Bind the server to the adress */
     ENetAddress address;
-    address.host = host;
+    enet_address_set_host(&address, host.c_str());
     address.port = port;
 
     server_host_ = enet_host_create(
@@ -55,7 +38,7 @@ void Server::SendENetMessage(std::string message, ENetPeer* peer)
     }
 }
 
-void Server::PollMessagesCycle()
+void Server::MainCycle()
 {
     int eventStatus = 1;
     while (1) {

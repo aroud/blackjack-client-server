@@ -1,5 +1,7 @@
 #pragma once
 
+#include "json.hpp"
+
 #include <vector>
 #include <memory>
 #include <utility>
@@ -10,8 +12,6 @@
 #include <limits>
 #include <thread>
 #include <atomic>
-
-#include "json.hpp"
 
 #include "player.h"
 #include "dealer.h"

@@ -12,11 +12,11 @@
 class Server
 {
 public:
-	Server(const uint32_t host, const uint16_t port, const size_t decks_number);
+	Server(const std::string host, const uint16_t port, const size_t decks_number);
 
 	void SendENetMessage(std::string message, ENetPeer* peer);
 
-	void PollMessagesCycle();
+	void MainCycle();
 
 	blackjack::Game& GetGame();
 private:

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "json.hpp"
+
 #include <vector>
 #include <memory>
 #include <utility>
@@ -10,8 +12,6 @@
 #include <limits>
 #include <thread>
 #include <atomic>
-
-#include "json.hpp"
 
 #include "player.h"
 #include "dealer.h"
@@ -41,6 +41,7 @@ namespace blackjack {
 	public:
 		using iterator = std::vector<std::shared_ptr<Player>>::iterator;
 		const size_t kMax = UINT32_MAX;
+		const size_t kMaxPlayers = 7;
 
 		Game(size_t deck_units_number);
 
@@ -72,9 +73,11 @@ namespace blackjack {
 
 		bool AddPlayer(size_t id);
 
-		bool RemovePlayer(size_t id);
+		void RemovePlayer(size_t id);
 
 		std::string GameToStr();
+
+		void TerminatePlayGameThread();
 	private:
 		RoundResults CheckWin(std::shared_ptr<Player> player_ptr);
 		
@@ -93,6 +96,8 @@ namespace blackjack {
 		size_t curr_player_id_ = kMax;
 
 		std::atomic<bool> action_done_ = false;
+
+		std::thread t;
 	};
 }
 

@@ -7,7 +7,7 @@ namespace blackjack {
 		switch (rank)
 		{
 		case blackjack::Rank::ace:
-			result = "1";
+			result = "ace";
 			break;
 		case blackjack::Rank::two:
 			result = "2";

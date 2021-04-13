@@ -1,10 +1,10 @@
-#include "console_input_system.h"
+#include "console_input_system_stub.h"
 
 namespace blackjack {
 
-    ConsoleInputSystem::ConsoleInputSystem() {}
+    ConsoleInputSystemStub::ConsoleInputSystemStub() {}
 
-    Turn blackjack::ConsoleInputSystem::GetTurn(const bool made_turn) const
+    Turn blackjack::ConsoleInputSystemStub::GetTurn(const bool made_turn) const
     {
         std::string input;
 
@@ -47,7 +47,7 @@ namespace blackjack {
         return turn;
     }
 
-    size_t blackjack::ConsoleInputSystem::StartRound(size_t min_bet, size_t max_bet) const
+    size_t blackjack::ConsoleInputSystemStub::StartRound(size_t min_bet, size_t max_bet) const
     {
         size_t result = 0;
         

@@ -37,5 +37,7 @@ private:
 	std::string message_;
 
 	blackjack::Game game_;
+
+	bool to_end = false;
 };
 

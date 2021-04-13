@@ -44,7 +44,7 @@ void Client::MainCycle()
     bool disconnected = false;
 
     while (true) {
-        eventStatus = enet_host_service(client_host_, &event_, 500);
+        eventStatus = enet_host_service(client_host_, &event_, 1000);
 
         if (eventStatus > 0) {
             switch (event_.type) {
@@ -59,24 +59,25 @@ void Client::MainCycle()
                 break;
 
             case ENET_EVENT_TYPE_DISCONNECT:
-                std::cout << "Client disconnected. Press any key to close the game.\n";
+                std::cout << "Client disconnected.\n";
                 disconnected = true;
                 event_.peer->data = NULL;
                 break;
             }
         }
 
-        if (disconnected) {
+        if (disconnected || to_end) {
+            std::cout << "Game ended. Press any key to exit.\n";
             std::cin.get();
             std::cin.get();
             break;
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
 
         if (!skip) {
             SendENetMessage("info", peer_);
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            std::this_thread::sleep_for(std::chrono::milliseconds(300));
         }
         else {
             skip = false;
@@ -132,9 +133,11 @@ bool Client::HandleMessage()
         }
 
         if (game_status == "ended") {
-            SendENetMessage("startGame", peer_);
+            //SendENetMessage("startGame", peer_);
+            to_end = true;
             return true;
         }
+
         if (game_status == "playerRegistration") {
             if (game_stub_.client_idx_ == UINT32_MAX && !game_stub_.try_to_get_id_) {
                 std::cout << "Register to the game? (y/n)\n";
@@ -247,8 +250,8 @@ bool Client::HandleMessage()
     }
     else if (type == "endGame") {
         std::cout << j["body"].get<std::string>() << "\n";
-        game_stub_ = GameStub();
-        return false;
+        to_end = true;
+        return true;
     }
     else {
         std::cout << j["body"].get<std::string>() << "\n";
@@ -283,6 +286,7 @@ void Client::PrintSituation(bool print_cards) const
     }
     std::cout << "\nChips: " << game_stub_.dealer_.chips_ << "\n\n";
 }
+
 
 ENetPeer* Client::GetPeer(const std::string& host, const uint16_t port) const
 {

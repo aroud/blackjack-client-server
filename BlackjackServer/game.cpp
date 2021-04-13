@@ -345,6 +345,8 @@ namespace blackjack {
 		bets_.clear();
 		dealer_.SetChips(chips_constants::kDealerDefaultChipsNumber);
 		dealer_.GetHand().ClearHand();
+		curr_player_id_ = kMax;
+		deck_.Reset();
 	}
 
 	void Game::ChangeActionDone()

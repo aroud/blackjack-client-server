@@ -42,5 +42,7 @@ private:
 	ENetPeer* peer_;
 
 	ENetHost* client_host_;
+
+	bool to_end = false;
 };
 

@@ -85,6 +85,8 @@ void Server::MainCycle()
                 }
                 else {
                     std::cout << "Ending game by removing clients.\n";
+                    size_t id = iter->first;
+                    game_.RemovePlayer(id);
                     connections_.erase(iter);
                     EndGame();
                 }
@@ -92,6 +94,10 @@ void Server::MainCycle()
                 event_.peer->data = NULL;
                 break;
             }
+        }
+        if (to_end) {
+            std::cout << "Server shuttling down.\n";
+            break;
         }
     }
 }
@@ -202,4 +208,5 @@ void Server::EndGame()
     }
     connections_.clear();
     connection_id_ = 1;
+    to_end = true;
 }
